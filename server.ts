@@ -1,3 +1,4 @@
+import { env } from "./src/config/env";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -6,11 +7,11 @@ import swaggerSpec from "./src/config/swagger";
 import authRoutes from "./src/routes/auth.routes";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const { PORT } = env;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: env.CLIENT_URL,
     credentials: true,
   })
 );
@@ -52,5 +53,5 @@ app.use(
 );
 
 app.listen(PORT, () => {
-  console.log(`Server running on http:localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

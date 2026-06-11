@@ -12,28 +12,21 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt";
+import { env } from "../config/env";
 
 const SALT_ROUNDS = 10;
 
-const COOKIE_ACCESS_MAX_AGE = process.env.COOKIE_ACCESS_MAX_AGE;
-const COOKIE_REFRESH_MAX_AGE = process.env.COOKIE_REFRESH_MAX_AGE;
-
-if (!COOKIE_ACCESS_MAX_AGE) {
-  throw new Error("COOKIE_ACCESS_MAX_AGE environment variable is not set");
-}
-
-if (!COOKIE_REFRESH_MAX_AGE) {
-  throw new Error("COOKIE_REFRESH_MAX_AGE environment variable is not set");
-}
-
-const accessMaxAgeMs = ms(COOKIE_ACCESS_MAX_AGE as Parameters<typeof ms>[0]);
-const refreshMaxAgeMs = ms(COOKIE_REFRESH_MAX_AGE as Parameters<typeof ms>[0]);
+const accessMaxAgeMs = ms(
+  env.COOKIE_ACCESS_MAX_AGE as Parameters<typeof ms>[0]
+);
+const refreshMaxAgeMs = ms(
+  env.COOKIE_REFRESH_MAX_AGE as Parameters<typeof ms>[0]
+);
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = registerSchema.parse(req.body);
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -43,10 +36,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Create user
     const user = await prisma.user.create({
       data: {
         name,
@@ -56,7 +47,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    // Generate tokens
     const accessToken = generateAccessToken({
       id: user.id,
       email: user.email,
@@ -69,17 +59,16 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       role: user.role,
     });
 
-    // Set cookies
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.isProduction,
       sameSite: "strict",
       maxAge: accessMaxAgeMs,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.isProduction,
       sameSite: "strict",
       maxAge: refreshMaxAgeMs,
     });
@@ -106,7 +95,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
-    // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -116,7 +104,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -124,7 +111,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate tokens
     const accessToken = generateAccessToken({
       id: user.id,
       email: user.email,
@@ -137,17 +123,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       role: user.role,
     });
 
-    // Set cookies
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.isProduction,
       sameSite: "strict",
       maxAge: accessMaxAgeMs,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.isProduction,
       sameSite: "strict",
       maxAge: refreshMaxAgeMs,
     });
@@ -186,12 +171,9 @@ export const refreshAccessToken = async (
   res: Response
 ): Promise<void> => {
   try {
-    const refreshToken = req.cookies.refreshToken;
-
-    if (!refreshToken) {
-      res.status(401).json({ message: "Refresh token not found" });
-      return;
-    }
+    const { refreshToken } = refreshTokenSchema.parse({
+      refreshToken: req.cookies.refreshToken,
+    });
 
     const decoded = verifyRefreshToken(refreshToken);
 
@@ -200,7 +182,6 @@ export const refreshAccessToken = async (
       return;
     }
 
-    // Find user to ensure they still exist
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
     });
@@ -210,24 +191,22 @@ export const refreshAccessToken = async (
       return;
     }
 
-    // Generate new access token
     const newAccessToken = generateAccessToken({
       id: user.id,
       email: user.email,
       role: user.role,
     });
 
-    // Set new access token cookie
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.isProduction,
       sameSite: "strict",
       maxAge: accessMaxAgeMs,
     });
 
     res.status(200).json({ message: "Access token refreshed successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(401).json({ message: "Refresh token not found" });
   }
 };
 
