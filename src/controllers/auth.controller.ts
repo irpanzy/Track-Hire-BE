@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import ms from "ms";
 import { prisma } from "../../lib/prisma";
 import {
   registerSchema,
@@ -13,6 +14,20 @@ import {
 } from "../utils/jwt";
 
 const SALT_ROUNDS = 10;
+
+const COOKIE_ACCESS_MAX_AGE = process.env.COOKIE_ACCESS_MAX_AGE;
+const COOKIE_REFRESH_MAX_AGE = process.env.COOKIE_REFRESH_MAX_AGE;
+
+if (!COOKIE_ACCESS_MAX_AGE) {
+  throw new Error("COOKIE_ACCESS_MAX_AGE environment variable is not set");
+}
+
+if (!COOKIE_REFRESH_MAX_AGE) {
+  throw new Error("COOKIE_REFRESH_MAX_AGE environment variable is not set");
+}
+
+const accessMaxAgeMs = ms(COOKIE_ACCESS_MAX_AGE as Parameters<typeof ms>[0]);
+const refreshMaxAgeMs = ms(COOKIE_REFRESH_MAX_AGE as Parameters<typeof ms>[0]);
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -59,14 +74,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: accessMaxAgeMs,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: refreshMaxAgeMs,
     });
 
     res.status(201).json({
@@ -127,14 +142,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: accessMaxAgeMs,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: refreshMaxAgeMs,
     });
 
     res.status(200).json({
@@ -207,7 +222,7 @@ export const refreshAccessToken = async (
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: accessMaxAgeMs,
     });
 
     res.status(200).json({ message: "Access token refreshed successfully" });
