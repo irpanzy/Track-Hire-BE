@@ -17,6 +17,10 @@ export const env = {
 
   DATABASE_URL: requireEnv("DATABASE_URL"),
 
+  ADMIN_NAME: requireEnv("ADMIN_NAME"),
+  ADMIN_EMAIL: requireEnv("ADMIN_EMAIL"),
+  ADMIN_PASSWORD: requireEnv("ADMIN_PASSWORD"),
+
   JWT_SECRET: requireEnv("JWT_SECRET"),
   JWT_REFRESH_SECRET: requireEnv("JWT_REFRESH_SECRET"),
   ACCESS_TOKEN_EXPIRY: requireEnv("ACCESS_TOKEN_EXPIRY"),
