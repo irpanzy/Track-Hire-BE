@@ -1,12 +1,13 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./src/config/swagger";
 import authRoutes from "./src/routes/auth.routes";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -17,9 +18,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Routes
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Track Hire API Documentation",
+  })
+);
+
 app.get("/", (req, res) => {
-  res.send("TrackHire API is running!");
+  res.send("Track Hire API is running!");
 });
 
 app.use("/api/auth", authRoutes);
@@ -28,7 +37,6 @@ interface HttpError extends Error {
   status?: number;
 }
 
-// Error handling middleware
 app.use(
   (
     err: HttpError,
@@ -44,5 +52,5 @@ app.use(
 );
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http:localhost:${PORT}`);
 });
