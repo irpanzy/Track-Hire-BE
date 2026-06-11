@@ -24,10 +24,14 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 
+interface HttpError extends Error {
+  status?: number;
+}
+
 // Error handling middleware
 app.use(
   (
-    err: any,
+    err: HttpError,
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
