@@ -13,15 +13,59 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { env } from "../config/env";
+import { TokenPayload } from "../models/auth.model";
 
 const SALT_ROUNDS = 10;
 
 const accessMaxAgeMs = ms(
   env.COOKIE_ACCESS_MAX_AGE as Parameters<typeof ms>[0]
 );
+
 const refreshMaxAgeMs = ms(
   env.COOKIE_REFRESH_MAX_AGE as Parameters<typeof ms>[0]
 );
+
+const buildTokenPayload = (user: TokenPayload): TokenPayload => ({
+  id: user.id,
+  email: user.email,
+  role: user.role,
+});
+
+const setAuthCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken?: string
+) => {
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: "strict",
+    maxAge: accessMaxAgeMs,
+  });
+
+  if (refreshToken) {
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: env.isProduction,
+      sameSite: "strict",
+      maxAge: refreshMaxAgeMs,
+    });
+  }
+};
+
+const clearAuthCookies = (res: Response) => {
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: "strict",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: env.isProduction,
+    sameSite: "strict",
+  });
+};
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -47,31 +91,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    const accessToken = generateAccessToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const payload = buildTokenPayload(user);
 
-    const refreshToken = generateRefreshToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: env.isProduction,
-      sameSite: "strict",
-      maxAge: accessMaxAgeMs,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: env.isProduction,
-      sameSite: "strict",
-      maxAge: refreshMaxAgeMs,
-    });
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(201).json({
       message: "User registered successfully",
@@ -83,11 +108,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(400).json({
+      message: error instanceof Error ? error.message : "Bad request",
+    });
   }
 };
 
@@ -111,31 +134,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const accessToken = generateAccessToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const payload = buildTokenPayload(user);
 
-    const refreshToken = generateRefreshToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: env.isProduction,
-      sameSite: "strict",
-      maxAge: accessMaxAgeMs,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: env.isProduction,
-      sameSite: "strict",
-      maxAge: refreshMaxAgeMs,
-    });
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(200).json({
       message: "Login successful",
@@ -147,23 +151,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: "Internal server error" });
-    }
+    res.status(400).json({
+      message: error instanceof Error ? error.message : "Bad request",
+    });
   }
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
-  try {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+export const logout = async (_req: Request, res: Response): Promise<void> => {
+  clearAuthCookies(res);
 
-    res.status(200).json({ message: "Logout successful" });
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
-  }
+  res.status(200).json({ message: "Logout successful" });
 };
 
 export const refreshAccessToken = async (
@@ -191,22 +188,19 @@ export const refreshAccessToken = async (
       return;
     }
 
-    const newAccessToken = generateAccessToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const payload = buildTokenPayload(user);
+    const newAccessToken = generateAccessToken(payload);
 
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: env.isProduction,
-      sameSite: "strict",
-      maxAge: accessMaxAgeMs,
-    });
+    setAuthCookies(res, newAccessToken);
 
-    res.status(200).json({ message: "Access token refreshed successfully" });
+    res.status(200).json({
+      message: "Access token refreshed successfully",
+    });
   } catch (error) {
-    res.status(401).json({ message: "Refresh token not found" });
+    res.status(401).json({
+      message:
+        error instanceof Error ? error.message : "Refresh token not found",
+    });
   }
 };
 
