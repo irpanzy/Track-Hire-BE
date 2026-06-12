@@ -40,6 +40,9 @@ export const env = {
   EMAIL_VERIFICATION_EXPIRY: requireEnv("EMAIL_VERIFICATION_EXPIRY"),
   PASSWORD_RESET_EXPIRY: requireEnv("PASSWORD_RESET_EXPIRY"),
 
+  IMAGEKIT_PRIVATE_KEY: requireEnv("IMAGEKIT_PRIVATE_KEY"),
+  MAX_FILE_SIZE: Number(process.env.MAX_FILE_SIZE),
+
   get isProduction() {
     return this.NODE_ENV === "production";
   },
