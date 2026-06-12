@@ -14,17 +14,16 @@ async function main() {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(
-    env.ADMIN_PASSWORD,
-    10
-  );
+  const hashedPassword = await bcrypt.hash(env.ADMIN_PASSWORD, 10);
 
   await prisma.user.create({
     data: {
       name: env.ADMIN_NAME,
+      username: env.ADMIN_USERNAME,
       email: env.ADMIN_EMAIL,
       password: hashedPassword,
       role: "ADMIN",
+      isEmailVerified: true,
     },
   });
 
