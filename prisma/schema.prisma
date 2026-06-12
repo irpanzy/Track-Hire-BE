@@ -64,6 +64,7 @@ model User {
   verificationTokens VerificationToken[]
 
   @@map("users")
+  @@index([deletedAt])
 }
 
 enum TokenType {
@@ -98,6 +99,7 @@ model Company {
   applications Application[]
 
   @@map("companies")
+  @@index([deletedAt])
 }
 
 model Application {
@@ -121,22 +123,28 @@ model Application {
   deletedAt    DateTime?         @map("deleted_at")
 
   user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company    Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company    Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
   histories  ApplicationHistory[]
   reminders  Reminder[]
 
   @@map("job_applications")
   @@index([userId])
   @@index([companyId])
+  @@index([status])
+  @@index([source])
+  @@index([jobType])
+  @@index([appliedDate])
+  @@index([deadlineDate])
+  @@index([deletedAt])
 }
 
 model ApplicationHistory {
-  id            String   @id @default(cuid())
-  applicationId String   @map("application_id")
-  oldStatus     String   @map("old_status")
-  newStatus     String   @map("new_status")
+  id            String             @id @default(cuid())
+  applicationId String             @map("application_id")
+  oldStatus     ApplicationStatus? @map("old_status")
+  newStatus     ApplicationStatus  @map("new_status")
   notes         String?
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
@@ -162,4 +170,5 @@ model Reminder {
   @@map("reminders")
   @@index([userId])
   @@index([applicationId])
+  @@index([deletedAt])
 }
