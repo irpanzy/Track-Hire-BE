@@ -9,7 +9,7 @@ const ALLOWED_MIME_TYPES = [
   "image/gif",
 ];
 
-const MAX_FILE_SIZE = env.MAX_FILE_SIZE;
+const { MAX_FILE_SIZE } = env;
 
 const storage = multer.memoryStorage();
 
