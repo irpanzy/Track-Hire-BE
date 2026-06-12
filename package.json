@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec tsx server.ts",
     "format": "prettier --write .",
+    "noemit": "tsc --noEmit",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
