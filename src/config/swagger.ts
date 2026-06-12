@@ -622,6 +622,442 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/users": {
+      get: {
+        tags: ["Users"],
+        summary: "List all users (Admin only)",
+        description:
+          "Retrieve a paginated list of users with optional search, role filter, and sorting. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Number of items per page",
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string" },
+            description: "Search by name, username, or email",
+          },
+          {
+            name: "role",
+            in: "query",
+            schema: { type: "string", enum: ["USER", "ADMIN"] },
+            description: "Filter by user role",
+          },
+          {
+            name: "sortBy",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["name", "username", "email", "createdAt"],
+              default: "createdAt",
+            },
+            description: "Sort field",
+          },
+          {
+            name: "order",
+            in: "query",
+            schema: { type: "string", enum: ["asc", "desc"], default: "desc" },
+            description: "Sort order",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Users fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    users: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/UserResponse" },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/{id}": {
+      get: {
+        tags: ["Users"],
+        summary: "Get user by ID",
+        description:
+          "Retrieve a user's profile. Users can view their own profile, admins can view any user.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    user: { $ref: "#/components/schemas/UserResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — can only view own profile",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden" },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User not found" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ["Users"],
+        summary: "Update user profile",
+        description:
+          "Update a user's name and/or username. Users can update their own profile, admins can update any user.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateUserRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "User updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    user: { $ref: "#/components/schemas/UserResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "409": {
+            description: "Username already taken",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Username already taken" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Users"],
+        summary: "Delete user (Admin only)",
+        description: "Soft-delete a user. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+                example: { message: "User deleted successfully" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/{id}/avatar": {
+      put: {
+        tags: ["Users"],
+        summary: "Upload or update avatar",
+        description:
+          "Upload a new avatar image. The image is resized to 200x200px WebP format and stored on ImageKit. Maximum file size: 2MB. Accepted formats: JPEG, PNG, WebP, GIF.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  avatar: {
+                    type: "string",
+                    format: "binary",
+                    description:
+                      "Avatar image file (JPEG, PNG, WebP, or GIF, max 2MB)",
+                  },
+                },
+                required: ["avatar"],
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Avatar updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    user: { $ref: "#/components/schemas/UserResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "No file uploaded or invalid file type",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Users"],
+        summary: "Delete avatar",
+        description:
+          "Remove the user's avatar from ImageKit and set avatarUrl to null.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Avatar deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    user: { $ref: "#/components/schemas/UserResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "User does not have an avatar",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User does not have an avatar" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -989,12 +1425,51 @@ const swaggerDefinition = {
             example: "john@example.com",
           },
           role: { $ref: "#/components/schemas/UserRole" },
+          avatarUrl: {
+            type: "string",
+            nullable: true,
+            example: "https://ik.imagekit.io/your_id/avatars/avatar.webp",
+          },
+          isEmailVerified: { type: "boolean", example: true },
+          createdAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-06-12T18:32:00.000Z",
+          },
         },
       },
       MessageResponse: {
         type: "object",
         properties: {
           message: { type: "string" },
+        },
+      },
+      UpdateUserRequest: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            minLength: 2,
+            maxLength: 100,
+            description: "Full name (optional)",
+          },
+          username: {
+            type: "string",
+            minLength: 3,
+            maxLength: 30,
+            pattern: "^[a-zA-Z0-9_]+$",
+            description:
+              "Username — alphanumeric and underscores only (optional)",
+          },
+        },
+      },
+      Pagination: {
+        type: "object",
+        properties: {
+          page: { type: "integer" },
+          limit: { type: "integer" },
+          total: { type: "integer" },
+          totalPages: { type: "integer" },
         },
       },
       ErrorResponse: {
@@ -1013,6 +1488,11 @@ const swaggerDefinition = {
       name: "Auth",
       description:
         "Authentication & authorization — register, email verification, login, Google OAuth, password reset, logout, token refresh, and user profile",
+    },
+    {
+      name: "Users",
+      description:
+        "User management — list, view, update profile, avatar upload/delete, and soft-delete",
     },
     {
       name: "Applications",

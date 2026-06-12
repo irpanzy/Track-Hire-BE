@@ -5,6 +5,7 @@ import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./src/config/swagger";
 import authRoutes from "./src/routes/auth.routes";
+import userRoutes from "./src/routes/user.routes";
 
 const app = express();
 const { PORT } = env;
@@ -33,6 +34,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 interface HttpError extends Error {
   status?: number;
