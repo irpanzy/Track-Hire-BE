@@ -15,7 +15,7 @@ const USER_SELECT = {
 } as const;
 
 const getParamId = (req: Request): string | null => {
-  const id = req.params.id;
+  const { id } = req.params;
   return typeof id === "string" ? id : null;
 };
 
