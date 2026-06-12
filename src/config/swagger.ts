@@ -1058,6 +1058,360 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/applications": {
+      post: {
+        tags: ["Applications"],
+        summary: "Create a new job application",
+        description:
+          "Creates a new job application. The company is automatically found or created by name (case-insensitive). An initial history record is logged with status APPLIED.",
+        security: [{ cookieAccessToken: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateApplicationRequest",
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Application created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    application: {
+                      $ref: "#/components/schemas/ApplicationResponse",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      get: {
+        tags: ["Applications"],
+        summary: "List job applications",
+        description:
+          "Retrieve a paginated list of job applications with optional filters. Regular users only see their own applications. Admins can see all.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Items per page",
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string" },
+            description: "Search by position or company name",
+          },
+          {
+            name: "status",
+            in: "query",
+            schema: { $ref: "#/components/schemas/ApplicationStatus" },
+            description: "Filter by application status",
+          },
+          {
+            name: "source",
+            in: "query",
+            schema: { $ref: "#/components/schemas/ApplicationSource" },
+            description: "Filter by application source",
+          },
+          {
+            name: "jobType",
+            in: "query",
+            schema: { $ref: "#/components/schemas/JobType" },
+            description: "Filter by job type",
+          },
+          {
+            name: "sortBy",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["appliedDate", "createdAt", "position", "status"],
+              default: "appliedDate",
+            },
+            description: "Sort field",
+          },
+          {
+            name: "order",
+            in: "query",
+            schema: { type: "string", enum: ["asc", "desc"], default: "desc" },
+            description: "Sort order",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Applications fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    applications: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/ApplicationResponse",
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid query parameters",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/applications/{id}": {
+      get: {
+        tags: ["Applications"],
+        summary: "Get application by ID",
+        description:
+          "Retrieve a single application with full details including company info and status change history. Owner or admin access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Application ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Application fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    application: {
+                      $ref: "#/components/schemas/ApplicationDetailResponse",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid application ID",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — not the owner",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Application not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ["Applications"],
+        summary: "Update application",
+        description:
+          "Update application fields. If status changes, a new record is automatically logged to ApplicationHistory. Owner or admin access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Application ID",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateApplicationRequest",
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Application updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    application: {
+                      $ref: "#/components/schemas/ApplicationResponse",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or no fields provided",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — not the owner",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Application not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ["Applications"],
+        summary: "Delete application",
+        description:
+          "Soft-delete a job application (sets deletedAt timestamp). Owner or admin access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Application ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Application deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+                example: { message: "Application deleted successfully" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — not the owner",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Application not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -1472,6 +1826,144 @@ const swaggerDefinition = {
           totalPages: { type: "integer" },
         },
       },
+      CreateApplicationRequest: {
+        type: "object",
+        required: ["companyName", "position", "jobType", "source"],
+        properties: {
+          companyName: {
+            type: "string",
+            example: "PT Teknologi Indonesia",
+            description: "Company name (auto find-or-create)",
+          },
+          companyWebsite: {
+            type: "string",
+            format: "uri",
+            example: "https://teknologi.co.id",
+          },
+          companyLocation: {
+            type: "string",
+            example: "Jakarta, Indonesia",
+          },
+          position: {
+            type: "string",
+            example: "Backend Developer",
+            description: "Job position (2-200 characters)",
+          },
+          jobType: { $ref: "#/components/schemas/JobType" },
+          location: { type: "string", example: "Jakarta" },
+          source: { $ref: "#/components/schemas/ApplicationSource" },
+          sourceUrl: {
+            type: "string",
+            format: "uri",
+            example: "https://linkedin.com/jobs/12345",
+          },
+          description: { type: "string" },
+          requirements: { type: "string" },
+          salaryRange: {
+            type: "string",
+            example: "15.000.000 - 25.000.000",
+          },
+          status: { $ref: "#/components/schemas/ApplicationStatus" },
+          appliedDate: {
+            type: "string",
+            format: "date-time",
+            description: "Defaults to now if not provided",
+          },
+          deadlineDate: { type: "string", format: "date-time" },
+          notes: { type: "string" },
+        },
+      },
+      UpdateApplicationRequest: {
+        type: "object",
+        properties: {
+          companyName: { type: "string" },
+          companyWebsite: { type: "string", format: "uri" },
+          companyLocation: { type: "string" },
+          position: { type: "string" },
+          jobType: { $ref: "#/components/schemas/JobType" },
+          location: { type: "string" },
+          source: { $ref: "#/components/schemas/ApplicationSource" },
+          sourceUrl: { type: "string", format: "uri" },
+          description: { type: "string" },
+          requirements: { type: "string" },
+          salaryRange: { type: "string" },
+          status: { $ref: "#/components/schemas/ApplicationStatus" },
+          appliedDate: { type: "string", format: "date-time" },
+          deadlineDate: { type: "string", format: "date-time" },
+          notes: { type: "string" },
+        },
+      },
+      CompanyResponse: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "clxyz_company_1" },
+          name: { type: "string", example: "PT Teknologi Indonesia" },
+          website: {
+            type: "string",
+            nullable: true,
+            example: "https://teknologi.co.id",
+          },
+          location: {
+            type: "string",
+            nullable: true,
+            example: "Jakarta, Indonesia",
+          },
+        },
+      },
+      ApplicationHistoryResponse: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          oldStatus: {
+            type: "string",
+            nullable: true,
+            description: "Previous status (null for initial creation)",
+          },
+          newStatus: { type: "string" },
+          notes: { type: "string", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+        },
+      },
+      ApplicationResponse: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "clxyz_app_1" },
+          position: { type: "string", example: "Backend Developer" },
+          jobType: { $ref: "#/components/schemas/JobType" },
+          location: { type: "string", nullable: true },
+          source: { $ref: "#/components/schemas/ApplicationSource" },
+          sourceUrl: { type: "string", nullable: true },
+          description: { type: "string", nullable: true },
+          requirements: { type: "string", nullable: true },
+          salaryRange: { type: "string", nullable: true },
+          status: { $ref: "#/components/schemas/ApplicationStatus" },
+          appliedDate: { type: "string", format: "date-time" },
+          deadlineDate: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+          },
+          notes: { type: "string", nullable: true },
+          createdAt: { type: "string", format: "date-time" },
+          company: { $ref: "#/components/schemas/CompanyResponse" },
+        },
+      },
+      ApplicationDetailResponse: {
+        allOf: [
+          { $ref: "#/components/schemas/ApplicationResponse" },
+          {
+            type: "object",
+            properties: {
+              histories: {
+                type: "array",
+                items: {
+                  $ref: "#/components/schemas/ApplicationHistoryResponse",
+                },
+              },
+            },
+          },
+        ],
+      },
       ErrorResponse: {
         type: "object",
         properties: {
@@ -1496,7 +1988,8 @@ const swaggerDefinition = {
     },
     {
       name: "Applications",
-      description: "Job application CRUD operations (coming soon)",
+      description:
+        "Job application CRUD — create, list, view, update, and soft-delete applications with auto company management and status history tracking",
     },
     {
       name: "Companies",

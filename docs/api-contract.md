@@ -604,3 +604,290 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 - **`401 Unauthorized`**: Missing or invalid session tokens.
 - **`403 Forbidden`**: User is not an admin.
 - **`404 Not Found`**: User not found.
+
+---
+
+## Application Management Endpoint Specifications
+
+### 16. Create Application
+
+- **Endpoint:** `POST /applications`
+- **Auth Required:** JWT
+- **Request Body Schema (`application/json`):**
+  - `companyName` (string, required): Company name, min 1 character, max 200 characters. Auto find-or-create.
+  - `companyWebsite` (string, optional): Valid URL format.
+  - `companyLocation` (string, optional): Max 200 characters.
+  - `position` (string, required): Job position, min 2 characters, max 200 characters.
+  - `jobType` (string, required): One of `FULL_TIME`, `PART_TIME`, `CONTRACT`, `INTERNSHIP`, `FREELANCE`, `REMOTE`.
+  - `location` (string, optional): Job location, max 200 characters.
+  - `source` (string, required): One of `LINKEDIN`, `GLINTS`, `JOBSTREET`, `UPWORK`, `INDEED`, `WEBSITE`, `INSTAGRAM`, `X`, `OTHER`.
+  - `sourceUrl` (string, optional): Valid URL format.
+  - `description` (string, optional): Job description.
+  - `requirements` (string, optional): Job requirements.
+  - `salaryRange` (string, optional): Max 100 characters.
+  - `status` (string, optional): Application status. Default: `APPLIED`.
+  - `appliedDate` (datetime, optional): Date applied. Default: now.
+  - `deadlineDate` (datetime, optional): Application deadline.
+  - `notes` (string, optional): Personal notes.
+
+#### Request Example:
+
+```json
+{
+  "companyName": "PT Teknologi Indonesia",
+  "companyWebsite": "https://teknologi.co.id",
+  "companyLocation": "Jakarta, Indonesia",
+  "position": "Backend Developer",
+  "jobType": "FULL_TIME",
+  "location": "Jakarta",
+  "source": "LINKEDIN",
+  "sourceUrl": "https://linkedin.com/jobs/12345",
+  "description": "Building REST APIs with Node.js",
+  "requirements": "3+ years experience with Node.js",
+  "salaryRange": "15.000.000 - 25.000.000",
+  "notes": "Applied via referral from John"
+}
+```
+
+#### Success Response (`201 Created`):
+
+```json
+{
+  "message": "Application created successfully",
+  "application": {
+    "id": "cuid-string-value",
+    "position": "Backend Developer",
+    "jobType": "FULL_TIME",
+    "location": "Jakarta",
+    "source": "LINKEDIN",
+    "sourceUrl": "https://linkedin.com/jobs/12345",
+    "description": "Building REST APIs with Node.js",
+    "requirements": "3+ years experience with Node.js",
+    "salaryRange": "15.000.000 - 25.000.000",
+    "status": "APPLIED",
+    "appliedDate": "2026-06-12T05:35:00.000Z",
+    "deadlineDate": null,
+    "notes": "Applied via referral from John",
+    "createdAt": "2026-06-12T05:35:00.000Z",
+    "company": {
+      "id": "cuid-company-value",
+      "name": "PT Teknologi Indonesia",
+      "website": "https://teknologi.co.id",
+      "location": "Jakarta, Indonesia"
+    }
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error (Zod validation failed).
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+
+---
+
+### 17. List Applications
+
+- **Endpoint:** `GET /applications`
+- **Auth Required:** JWT
+- **Request Query Parameters:**
+  - `page` (integer, optional): Page number, min 1. Default: `1`.
+  - `limit` (integer, optional): Items per page, min 1, max 100. Default: `10`.
+  - `search` (string, optional): Search by position or company name (case-insensitive).
+  - `status` (string, optional): Filter by application status.
+  - `source` (string, optional): Filter by application source.
+  - `jobType` (string, optional): Filter by job type.
+  - `sortBy` (string, optional): Sort field: `appliedDate`, `createdAt`, `position`, `status`. Default: `appliedDate`.
+  - `order` (string, optional): Sort order: `asc` or `desc`. Default: `desc`.
+
+_Note: Regular users only see their own applications. Admins can see all applications._
+
+#### Request Example:
+
+`/api/applications?page=1&limit=10&status=INTERVIEW&sortBy=appliedDate&order=desc`
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Applications fetched successfully",
+  "applications": [
+    {
+      "id": "cuid-string-value",
+      "position": "Backend Developer",
+      "jobType": "FULL_TIME",
+      "location": "Jakarta",
+      "source": "LINKEDIN",
+      "sourceUrl": "https://linkedin.com/jobs/12345",
+      "description": "Building REST APIs with Node.js",
+      "requirements": "3+ years experience with Node.js",
+      "salaryRange": "15.000.000 - 25.000.000",
+      "status": "INTERVIEW",
+      "appliedDate": "2026-06-12T05:35:00.000Z",
+      "deadlineDate": null,
+      "notes": null,
+      "createdAt": "2026-06-12T05:35:00.000Z",
+      "company": {
+        "id": "cuid-company-value",
+        "name": "PT Teknologi Indonesia",
+        "website": "https://teknologi.co.id",
+        "location": "Jakarta, Indonesia"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Invalid query parameters.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+
+---
+
+### 18. Get Application By ID
+
+- **Endpoint:** `GET /applications/:id`
+- **Auth Required:** JWT (Owner or ADMIN)
+- **Path Parameters:**
+  - `id` (string, required): The application CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Application fetched successfully",
+  "application": {
+    "id": "cuid-string-value",
+    "position": "Backend Developer",
+    "jobType": "FULL_TIME",
+    "location": "Jakarta",
+    "source": "LINKEDIN",
+    "sourceUrl": "https://linkedin.com/jobs/12345",
+    "description": "Building REST APIs with Node.js",
+    "requirements": "3+ years experience with Node.js",
+    "salaryRange": "15.000.000 - 25.000.000",
+    "status": "INTERVIEW",
+    "appliedDate": "2026-06-12T05:35:00.000Z",
+    "deadlineDate": null,
+    "notes": "Applied via referral from John",
+    "createdAt": "2026-06-12T05:35:00.000Z",
+    "company": {
+      "id": "cuid-company-value",
+      "name": "PT Teknologi Indonesia",
+      "website": "https://teknologi.co.id",
+      "location": "Jakarta, Indonesia"
+    },
+    "histories": [
+      {
+        "id": "cuid-history-2",
+        "oldStatus": "APPLIED",
+        "newStatus": "INTERVIEW",
+        "notes": null,
+        "createdAt": "2026-06-13T10:00:00.000Z"
+      },
+      {
+        "id": "cuid-history-1",
+        "oldStatus": null,
+        "newStatus": "APPLIED",
+        "notes": "Application created",
+        "createdAt": "2026-06-12T05:35:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Invalid application ID.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not the owner and not an admin.
+- **`404 Not Found`**: Application not found or soft-deleted.
+
+---
+
+### 19. Update Application
+
+- **Endpoint:** `PUT /applications/:id`
+- **Auth Required:** JWT (Owner or ADMIN)
+- **Path Parameters:**
+  - `id` (string, required): The application CUID.
+- **Request Body Schema (`application/json`):** All fields from Create Application are optional.
+
+_Note: If `status` changes, a new record is automatically logged to `ApplicationHistory`._
+
+#### Request Example:
+
+```json
+{
+  "status": "INTERVIEW",
+  "notes": "Interview scheduled for next Monday"
+}
+```
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Application updated successfully",
+  "application": {
+    "id": "cuid-string-value",
+    "position": "Backend Developer",
+    "jobType": "FULL_TIME",
+    "location": "Jakarta",
+    "source": "LINKEDIN",
+    "sourceUrl": "https://linkedin.com/jobs/12345",
+    "description": "Building REST APIs with Node.js",
+    "requirements": "3+ years experience with Node.js",
+    "salaryRange": "15.000.000 - 25.000.000",
+    "status": "INTERVIEW",
+    "appliedDate": "2026-06-12T05:35:00.000Z",
+    "deadlineDate": null,
+    "notes": "Interview scheduled for next Monday",
+    "createdAt": "2026-06-12T05:35:00.000Z",
+    "company": {
+      "id": "cuid-company-value",
+      "name": "PT Teknologi Indonesia",
+      "website": "https://teknologi.co.id",
+      "location": "Jakarta, Indonesia"
+    }
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error or no fields provided.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not the owner and not an admin.
+- **`404 Not Found`**: Application not found or soft-deleted.
+
+---
+
+### 20. Delete Application
+
+- **Endpoint:** `DELETE /applications/:id`
+- **Auth Required:** JWT (Owner or ADMIN)
+- **Path Parameters:**
+  - `id` (string, required): The application CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Application deleted successfully"
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not the owner and not an admin.
+- **`404 Not Found`**: Application not found.
