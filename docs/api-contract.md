@@ -10,17 +10,23 @@ This document details the API contracts for the authentication services in the T
 
 ## Endpoint Summary
 
-| Method   | Endpoint                                          | Auth | Description                                       |
-| :------- | :------------------------------------------------ | :--- | :------------------------------------------------ |
-| **POST** | [`/auth/register`](#/auth/register)               | None | Register a new user account                       |
-| **POST** | [`/auth/verify-email`](#/auth/verify-email)       | None | Verify user email address                         |
-| **POST** | [`/auth/login`](#/auth/login)                     | None | Authenticate user using email/username & password |
-| **POST** | [`/auth/google`](#/auth/google)                   | None | Authenticate or register using Google Sign-In     |
-| **POST** | [`/auth/forgot-password`](#/auth/forgot-password) | None | Request password reset verification link          |
-| **POST** | [`/auth/reset-password`](#/auth/reset-password)   | None | Reset password using token                        |
-| **POST** | [`/auth/logout`](#/auth/logout)                   | None | Logout user and clear auth cookies                |
-| **POST** | [`/auth/refresh`](#/auth/refresh)                 | None | Refresh access token using cookie refresh token   |
-| **GET**  | [`/auth/me`](#/auth/me)                           | JWT  | Fetch current authenticated user profile          |
+| Method     | Endpoint                                          | Auth | Description                                        |
+| :--------- | :------------------------------------------------ | :--- | :------------------------------------------------- |
+| **POST**   | [`/auth/register`](#/auth/register)               | None | Register a new user account                        |
+| **POST**   | [`/auth/verify-email`](#/auth/verify-email)       | None | Verify user email address                          |
+| **POST**   | [`/auth/login`](#/auth/login)                     | None | Authenticate user using email/username & password  |
+| **POST**   | [`/auth/google`](#/auth/google)                   | None | Authenticate or register using Google Sign-In      |
+| **POST**   | [`/auth/forgot-password`](#/auth/forgot-password) | None | Request password reset verification link           |
+| **POST**   | [`/auth/reset-password`](#/auth/reset-password)   | None | Reset password using token                         |
+| **POST**   | [`/auth/logout`](#/auth/logout)                   | None | Logout user and clear auth cookies                 |
+| **POST**   | [`/auth/refresh`](#/auth/refresh)                 | None | Refresh access token using cookie refresh token    |
+| **GET**    | [`/auth/me`](#/auth/me)                           | JWT  | Fetch current authenticated user profile           |
+| **GET**    | [`/users`](#/users/list)                          | JWT  | List all users with pagination & filters (Admin)   |
+| **GET**    | [`/users/:id`](#/users/get)                       | JWT  | Get user profile by ID (Self or Admin)             |
+| **PUT**    | [`/users/:id`](#/users/update)                    | JWT  | Update user profile fields (Self or Admin)         |
+| **PUT**    | [`/users/:id/avatar`](#/users/upload-avatar)      | JWT  | Upload & resize avatar to ImageKit (Self or Admin) |
+| **DELETE** | [`/users/:id/avatar`](#/users/delete-avatar)      | JWT  | Delete user avatar (Self or Admin)                 |
+| **DELETE** | [`/users/:id`](#/users/delete)                    | JWT  | Soft delete a user account (Admin only)            |
 
 ---
 
@@ -378,3 +384,223 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
     "message": "User not found"
   }
   ```
+
+---
+
+## User Management Endpoint Specifications
+
+### 10. List Users (Admin only)
+
+- **Endpoint:** `GET /users`
+- **Auth Required:** JWT (ADMIN role required)
+- **Request Query Parameters:**
+  - `page` (integer, optional): Page number, min 1. Default: `1`.
+  - `limit` (integer, optional): Number of users per page, min 1, max 100. Default: `10`.
+  - `search` (string, optional): Search keyword matching user `name`, `username`, or `email` (case-insensitive).
+  - `role` (string, optional): Filter by user role, either `USER` or `ADMIN`.
+  - `sortBy` (string, optional): Field to sort by: `name`, `username`, `email`, `createdAt`. Default: `createdAt`.
+  - `order` (string, optional): Sort order: `asc` or `desc`. Default: `desc`.
+
+#### Request Example:
+
+`/api/users?page=1&limit=2&role=USER`
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Users fetched successfully",
+  "users": [
+    {
+      "id": "cuid-string-1",
+      "name": "Jane Doe",
+      "username": "janedoe",
+      "email": "jane@example.com",
+      "role": "USER",
+      "avatarUrl": "https://ik.imagekit.io/your_id/avatars/avatar.webp",
+      "isEmailVerified": true,
+      "createdAt": "2026-06-12T05:35:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 2,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not an admin.
+
+---
+
+### 11. Get User By ID
+
+- **Endpoint:** `GET /users/:id`
+- **Auth Required:** JWT (Self or ADMIN role required)
+- **Path Parameters:**
+  - `id` (string, required): The target user CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "User fetched successfully",
+  "user": {
+    "id": "cuid-string-value",
+    "name": "John Doe",
+    "username": "johndoe_99",
+    "email": "johndoe@example.com",
+    "role": "USER",
+    "avatarUrl": null,
+    "isEmailVerified": true,
+    "createdAt": "2026-06-12T05:35:00.000Z"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: Requesting ID is not self and not an admin.
+- **`404 Not Found`**: User not found or has been soft-deleted.
+
+---
+
+### 12. Update User Profile
+
+- **Endpoint:** `PUT /users/:id`
+- **Auth Required:** JWT (Self or ADMIN role required)
+- **Path Parameters:**
+  - `id` (string, required): The target user CUID.
+- **Request Body Schema (`application/json`):**
+  - `name` (string, optional): Full name, min 2 characters, max 100 characters.
+  - `username` (string, optional): Unique username, min 3 characters, max 30 characters, alphanumeric and underscore (`_`) only.
+
+#### Request Example:
+
+```json
+{
+  "name": "John Updated",
+  "username": "john_updated"
+}
+```
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "User updated successfully",
+  "user": {
+    "id": "cuid-string-value",
+    "name": "John Updated",
+    "username": "john_updated",
+    "email": "johndoe@example.com",
+    "role": "USER",
+    "avatarUrl": null,
+    "isEmailVerified": true,
+    "createdAt": "2026-06-12T05:35:00.000Z"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation failed.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not self and not an admin.
+- **`409 Conflict`**: Username is already taken by another user.
+
+---
+
+### 13. Upload User Avatar
+
+- **Endpoint:** `PUT /users/:id/avatar`
+- **Auth Required:** JWT (Self or ADMIN role required)
+- **Path Parameters:**
+  - `id` (string, required): The target user CUID.
+- **Request Body Schema (`multipart/form-data`):**
+  - `avatar` (file, required): Image file (JPEG, PNG, WebP, GIF), max size configured (defaults to 2MB).
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Avatar updated successfully",
+  "user": {
+    "id": "cuid-string-value",
+    "name": "John Updated",
+    "username": "john_updated",
+    "email": "johndoe@example.com",
+    "role": "USER",
+    "avatarUrl": "https://ik.imagekit.io/your_id/avatars/avatar_cuid.webp",
+    "isEmailVerified": true,
+    "createdAt": "2026-06-12T05:35:00.000Z"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: File missing, size exceeds configured limit, or file type not allowed.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not self and not an admin.
+
+---
+
+### 14. Delete User Avatar
+
+- **Endpoint:** `DELETE /users/:id/avatar`
+- **Auth Required:** JWT (Self or ADMIN role required)
+- **Path Parameters:**
+  - `id` (string, required): The target user CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Avatar deleted successfully",
+  "user": {
+    "id": "cuid-string-value",
+    "name": "John Updated",
+    "username": "john_updated",
+    "email": "johndoe@example.com",
+    "role": "USER",
+    "avatarUrl": null,
+    "isEmailVerified": true,
+    "createdAt": "2026-06-12T05:35:00.000Z"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not self and not an admin.
+
+---
+
+### 15. Soft Delete User (Admin only)
+
+- **Endpoint:** `DELETE /users/:id`
+- **Auth Required:** JWT (ADMIN role required)
+- **Path Parameters:**
+  - `id` (string, required): The target user CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "User deleted successfully"
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`403 Forbidden`**: User is not an admin.
+- **`404 Not Found`**: User not found.
