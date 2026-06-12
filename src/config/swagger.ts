@@ -30,7 +30,7 @@ const swaggerDefinition = {
       post: {
         summary: "Register a new user",
         description:
-          "Creates a new user account with the provided credentials. On success, sets accessToken and refreshToken as httpOnly cookies and returns the created user profile.",
+          "Creates a new user account with the provided credentials. A verification email will be sent to the user's email address. The user must verify their email before they can log in.",
         tags: ["Auth"],
         requestBody: {
           required: true,
@@ -42,14 +42,8 @@ const swaggerDefinition = {
         },
         responses: {
           "201": {
-            description: "User registered successfully",
-            headers: {
-              "Set-Cookie": {
-                description:
-                  "Sets accessToken and refreshToken httpOnly cookies",
-                schema: { type: "string" },
-              },
-            },
+            description:
+              "User registered successfully. Verification email sent.",
             content: {
               "application/json": {
                 schema: {
@@ -57,7 +51,8 @@ const swaggerDefinition = {
                   properties: {
                     message: {
                       type: "string",
-                      example: "User registered successfully",
+                      example:
+                        "Registration successful. Please check your email to verify your account.",
                     },
                     user: { $ref: "#/components/schemas/UserResponse" },
                   },
@@ -74,11 +69,73 @@ const swaggerDefinition = {
             },
           },
           "409": {
-            description: "Email already registered",
+            description: "Email or username already taken",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
-                example: { message: "Email already registered" },
+                examples: {
+                  emailTaken: {
+                    summary: "Email already registered",
+                    value: { message: "Email already registered" },
+                  },
+                  usernameTaken: {
+                    summary: "Username already taken",
+                    value: { message: "Username already taken" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/auth/verify-email": {
+      post: {
+        summary: "Verify email address",
+        description:
+          "Verifies a user's email address using the token sent via email during registration. The token is single-use and expires after 24 hours.",
+        tags: ["Auth"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/VerifyEmailRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Email verified successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Email verified successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid or expired verification token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: {
+                  message: "Invalid or expired verification token",
+                },
               },
             },
           },
@@ -97,7 +154,7 @@ const swaggerDefinition = {
       post: {
         summary: "Login user",
         description:
-          "Authenticates a user with email and password. On success, sets accessToken and refreshToken as httpOnly cookies and returns the user profile.",
+          "Authenticates a user with email/username and password. On success, sets accessToken and refreshToken as httpOnly cookies and returns the user profile. Email must be verified before login is allowed.",
         tags: ["Auth"],
         requestBody: {
           required: true,
@@ -141,11 +198,226 @@ const swaggerDefinition = {
             },
           },
           "401": {
-            description: "Invalid email or password",
+            description: "Invalid credentials or Google-only account",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
-                example: { message: "Invalid email or password" },
+                examples: {
+                  invalidCredentials: {
+                    summary: "Invalid credentials",
+                    value: { message: "Invalid credentials" },
+                  },
+                  googleOnly: {
+                    summary: "Google-only account",
+                    value: {
+                      message:
+                        "This account uses Google Sign-In. Please login with Google.",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "403": {
+            description: "Email not verified",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: {
+                  message:
+                    "Please verify your email before logging in. Check your inbox for the verification link.",
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/auth/google": {
+      post: {
+        summary: "Google OAuth login",
+        description:
+          "Authenticates a user using a Google ID token from the frontend. If the user doesn't exist, a new account is created automatically (email auto-verified). If an existing account has the same email, the Google account is linked to it.",
+        tags: ["Auth"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/GoogleAuthRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Google authentication successful",
+            headers: {
+              "Set-Cookie": {
+                description:
+                  "Sets accessToken and refreshToken httpOnly cookies",
+                schema: { type: "string" },
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Google authentication successful",
+                    },
+                    user: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string", example: "clxyz1234567890" },
+                        name: { type: "string", example: "John Doe" },
+                        username: { type: "string", example: "johndoe" },
+                        email: {
+                          type: "string",
+                          format: "email",
+                          example: "john@gmail.com",
+                        },
+                        role: { $ref: "#/components/schemas/UserRole" },
+                        avatarUrl: {
+                          type: "string",
+                          nullable: true,
+                          example: "https://lh3.googleusercontent.com/...",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Invalid Google token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Invalid Google token" },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/auth/forgot-password": {
+      post: {
+        summary: "Request password reset",
+        description:
+          "Sends a password reset email to the user. For security, always returns a success message regardless of whether the email exists (prevents email enumeration). The reset link expires after 1 hour.",
+        tags: ["Auth"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ForgotPasswordRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Password reset email sent (or email doesn't exist — same response for security)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example:
+                        "If an account with that email exists, a password reset link has been sent.",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error (invalid email format)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/auth/reset-password": {
+      post: {
+        summary: "Reset password",
+        description:
+          "Resets the user's password using a valid reset token from the forgot-password email. The token is single-use and expires after 1 hour.",
+        tags: ["Auth"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ResetPasswordRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password reset successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Password reset successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid or expired reset token, or validation error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                examples: {
+                  invalidToken: {
+                    summary: "Invalid or expired token",
+                    value: { message: "Invalid or expired reset token" },
+                  },
+                  validationError: {
+                    summary: "Password validation failed",
+                    value: {
+                      message: "Password must be at least 8 characters",
+                    },
+                  },
+                },
               },
             },
           },
@@ -289,6 +561,10 @@ const swaggerDefinition = {
                           type: "string",
                           example: "John Doe",
                         },
+                        username: {
+                          type: "string",
+                          example: "johndoe",
+                        },
                         email: {
                           type: "string",
                           format: "email",
@@ -296,6 +572,15 @@ const swaggerDefinition = {
                         },
                         role: {
                           $ref: "#/components/schemas/UserRole",
+                        },
+                        avatarUrl: {
+                          type: "string",
+                          nullable: true,
+                          example: "https://lh3.googleusercontent.com/...",
+                        },
+                        isEmailVerified: {
+                          type: "boolean",
+                          example: true,
                         },
                         createdAt: {
                           type: "string",
@@ -406,12 +691,30 @@ const swaggerDefinition = {
         properties: {
           id: { type: "string", description: "Unique user identifier (cuid)" },
           name: { type: "string", description: "Full name of the user" },
+          username: {
+            type: "string",
+            description: "Unique username",
+          },
           email: {
             type: "string",
             format: "email",
             description: "Email address (unique)",
           },
           role: { $ref: "#/components/schemas/UserRole" },
+          isEmailVerified: {
+            type: "boolean",
+            description: "Whether the user's email has been verified",
+          },
+          googleId: {
+            type: "string",
+            nullable: true,
+            description: "Google account ID (if linked)",
+          },
+          avatarUrl: {
+            type: "string",
+            nullable: true,
+            description: "Profile picture URL",
+          },
           createdAt: {
             type: "string",
             format: "date-time",
@@ -563,7 +866,7 @@ const swaggerDefinition = {
       },
       RegisterRequest: {
         type: "object",
-        required: ["name", "email", "password"],
+        required: ["name", "username", "email", "password", "confirmPassword"],
         properties: {
           name: {
             type: "string",
@@ -571,6 +874,15 @@ const swaggerDefinition = {
             maxLength: 100,
             example: "John Doe",
             description: "Full name (2-100 characters)",
+          },
+          username: {
+            type: "string",
+            minLength: 3,
+            maxLength: 30,
+            pattern: "^[a-zA-Z0-9_]+$",
+            example: "johndoe",
+            description:
+              "Unique username (3-30 characters, letters, numbers, underscores only)",
           },
           email: {
             type: "string",
@@ -585,20 +897,83 @@ const swaggerDefinition = {
             description:
               "Minimum 8 chars, must contain uppercase, lowercase, and number",
           },
+          confirmPassword: {
+            type: "string",
+            example: "SecurePass123",
+            description: "Must match the password field",
+          },
         },
       },
       LoginRequest: {
         type: "object",
-        required: ["email", "password"],
+        required: ["emailOrUsername", "password"],
+        properties: {
+          emailOrUsername: {
+            type: "string",
+            example: "johndoe",
+            description:
+              "Email address or username. If it contains '@', it is treated as an email.",
+          },
+          password: {
+            type: "string",
+            example: "SecurePass123",
+          },
+        },
+      },
+      VerifyEmailRequest: {
+        type: "object",
+        required: ["token"],
+        properties: {
+          token: {
+            type: "string",
+            format: "uuid",
+            example: "550e8400-e29b-41d4-a716-446655440000",
+            description:
+              "Verification token received via email. Single-use, expires in 24 hours.",
+          },
+        },
+      },
+      GoogleAuthRequest: {
+        type: "object",
+        required: ["idToken"],
+        properties: {
+          idToken: {
+            type: "string",
+            example: "eyJhbGciOiJSUzI1NiIs...",
+            description:
+              "Google ID token obtained from Google Sign-In on the frontend",
+          },
+        },
+      },
+      ForgotPasswordRequest: {
+        type: "object",
+        required: ["email"],
         properties: {
           email: {
             type: "string",
             format: "email",
             example: "john@example.com",
+            description: "Email address of the account to reset",
+          },
+        },
+      },
+      ResetPasswordRequest: {
+        type: "object",
+        required: ["token", "password"],
+        properties: {
+          token: {
+            type: "string",
+            format: "uuid",
+            example: "550e8400-e29b-41d4-a716-446655440000",
+            description:
+              "Password reset token received via email. Single-use, expires in 1 hour.",
           },
           password: {
             type: "string",
-            example: "SecurePass123",
+            minLength: 8,
+            example: "NewSecurePass456",
+            description:
+              "New password. Minimum 8 chars, must contain uppercase, lowercase, and number.",
           },
         },
       },
@@ -607,6 +982,7 @@ const swaggerDefinition = {
         properties: {
           id: { type: "string", example: "clxyz1234567890" },
           name: { type: "string", example: "John Doe" },
+          username: { type: "string", example: "johndoe" },
           email: {
             type: "string",
             format: "email",
@@ -636,7 +1012,7 @@ const swaggerDefinition = {
     {
       name: "Auth",
       description:
-        "Authentication & authorization — register, login, logout, token refresh, and user profile",
+        "Authentication & authorization — register, email verification, login, Google OAuth, password reset, logout, token refresh, and user profile",
     },
     {
       name: "Applications",

@@ -17,6 +17,7 @@ export const env = {
 
   DATABASE_URL: requireEnv("DATABASE_URL"),
 
+  ADMIN_USERNAME: requireEnv("ADMIN_USERNAME"),
   ADMIN_NAME: requireEnv("ADMIN_NAME"),
   ADMIN_EMAIL: requireEnv("ADMIN_EMAIL"),
   ADMIN_PASSWORD: requireEnv("ADMIN_PASSWORD"),
@@ -28,6 +29,16 @@ export const env = {
 
   COOKIE_ACCESS_MAX_AGE: requireEnv("COOKIE_ACCESS_MAX_AGE"),
   COOKIE_REFRESH_MAX_AGE: requireEnv("COOKIE_REFRESH_MAX_AGE"),
+
+  SMTP_HOST: requireEnv("SMTP_HOST"),
+  SMTP_PORT: Number(requireEnv("SMTP_PORT")),
+  SMTP_USER: requireEnv("SMTP_USER"),
+  SMTP_PASS: requireEnv("SMTP_PASS"),
+
+  GOOGLE_CLIENT_ID: requireEnv("GOOGLE_CLIENT_ID"),
+
+  EMAIL_VERIFICATION_EXPIRY: requireEnv("EMAIL_VERIFICATION_EXPIRY"),
+  PASSWORD_RESET_EXPIRY: requireEnv("PASSWORD_RESET_EXPIRY"),
 
   get isProduction() {
     return this.NODE_ENV === "production";
