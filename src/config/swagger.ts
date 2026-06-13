@@ -1962,6 +1962,33 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/dashboard/stats": {
+      get: {
+        tags: ["Dashboard"],
+        summary: "Get dashboard stats",
+        description:
+          "Retrieve compiled job application statistics and trends for the current authenticated user.",
+        security: [{ cookieAccessToken: [] }],
+        responses: {
+          "200": {
+            description: "Dashboard stats fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/DashboardStatsResponse",
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2654,6 +2681,56 @@ const swaggerDefinition = {
           },
         },
       },
+      DashboardStatsResponse: {
+        type: "object",
+        properties: {
+          message: { type: "string" },
+          data: {
+            type: "object",
+            properties: {
+              totalApplications: { type: "integer", example: 12 },
+              statusDistribution: {
+                type: "object",
+                additionalProperties: { type: "integer" },
+                example: { APPLIED: 5, INTERVIEW: 3, REJECTED: 4 },
+              },
+              sourceDistribution: {
+                type: "object",
+                additionalProperties: { type: "integer" },
+                example: { LINKEDIN: 8, GLINTS: 4 },
+              },
+              recentApplications: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", example: "clxyz_app_1" },
+                    position: { type: "string", example: "Backend Developer" },
+                    status: { $ref: "#/components/schemas/ApplicationStatus" },
+                    appliedDate: { type: "string", format: "date-time" },
+                    company: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string", example: "Google" },
+                      },
+                    },
+                  },
+                },
+              },
+              monthlyTrend: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    month: { type: "string", example: "Jun 2026" },
+                    count: { type: "integer", example: 4 },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
   },
   tags: [
@@ -2681,6 +2758,10 @@ const swaggerDefinition = {
       name: "Reminders",
       description:
         "Reminder management — list, view, create, update, and soft-delete reminders",
+    },
+    {
+      name: "Dashboard",
+      description: "Dashboard and statistics API",
     },
   ],
 };
