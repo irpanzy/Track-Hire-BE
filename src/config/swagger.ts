@@ -1520,6 +1520,229 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/companies": {
+      post: {
+        tags: ["Companies"],
+        summary: "Create a new company",
+        description:
+          "Creates a new company record. Requires authentication. Returns 409 if a company with the same name already exists.",
+        security: [{ cookieAccessToken: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateCompanyRequest" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Company created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    company: { $ref: "#/components/schemas/Company" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "409": {
+            description: "Company already exists",
+          },
+        },
+      },
+      get: {
+        tags: ["Companies"],
+        summary: "List companies",
+        description:
+          "Retrieve a paginated list of companies. Supports search, sorting, and userOnly filtering.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10 },
+          },
+          { name: "search", in: "query", schema: { type: "string" } },
+          {
+            name: "userOnly",
+            in: "query",
+            schema: { type: "boolean", default: false },
+            description:
+              "Only return companies with active applications for the user",
+          },
+          {
+            name: "sortBy",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["name", "createdAt"],
+              default: "name",
+            },
+          },
+          {
+            name: "order",
+            in: "query",
+            schema: { type: "string", enum: ["asc", "desc"], default: "asc" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Companies fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    companies: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Company" },
+                    },
+                    pagination: { $ref: "#/components/schemas/Pagination" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
+    "/api/companies/{id}": {
+      get: {
+        tags: ["Companies"],
+        summary: "Get company by ID",
+        description:
+          "Retrieve a company's details, including the user's active applications at this company.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Company fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    company: {
+                      $ref: "#/components/schemas/CompanyDetailResponse",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Company not found",
+          },
+        },
+      },
+      put: {
+        tags: ["Companies"],
+        summary: "Update company",
+        description:
+          "Update company details. Returns 409 if name conflicts with another company.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateCompanyRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Company updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    company: { $ref: "#/components/schemas/Company" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Company not found",
+          },
+          "409": {
+            description: "Company name already taken",
+          },
+        },
+      },
+      delete: {
+        tags: ["Companies"],
+        summary: "Delete company",
+        description: "Soft-delete a company record.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Company deleted successfully",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Company not found",
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2001,6 +2224,77 @@ const swaggerDefinition = {
           notes: { type: "string" },
         },
       },
+      CreateCompanyRequest: {
+        type: "object",
+        required: ["name"],
+        properties: {
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 200,
+            example: "Google",
+          },
+          website: {
+            type: "string",
+            format: "uri",
+            nullable: true,
+            example: "https://google.com",
+          },
+          location: {
+            type: "string",
+            maxLength: 200,
+            nullable: true,
+            example: "Mountain View, CA",
+          },
+        },
+      },
+      UpdateCompanyRequest: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 200,
+            example: "Google Inc.",
+          },
+          website: {
+            type: "string",
+            format: "uri",
+            nullable: true,
+            example: "https://google.com",
+          },
+          location: {
+            type: "string",
+            maxLength: 200,
+            nullable: true,
+            example: "Mountain View, California",
+          },
+        },
+      },
+      CompanyDetailResponse: {
+        allOf: [
+          { $ref: "#/components/schemas/Company" },
+          {
+            type: "object",
+            properties: {
+              applications: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    position: { type: "string" },
+                    jobType: { $ref: "#/components/schemas/JobType" },
+                    status: { $ref: "#/components/schemas/ApplicationStatus" },
+                    appliedDate: { type: "string", format: "date-time" },
+                    createdAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
       CompanyResponse: {
         type: "object",
         properties: {
@@ -2101,7 +2395,8 @@ const swaggerDefinition = {
     },
     {
       name: "Companies",
-      description: "Company management (coming soon)",
+      description:
+        "Company management — list, view, create, update, and soft-delete companies",
     },
     {
       name: "Reminders",

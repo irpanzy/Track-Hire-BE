@@ -7,6 +7,7 @@ import swaggerSpec from "./src/config/swagger";
 import authRoutes from "./src/routes/auth.routes";
 import userRoutes from "./src/routes/user.routes";
 import applicationRoutes from "./src/routes/application.routes";
+import companyRoutes from "./src/routes/company.routes";
 
 const app = express();
 const { PORT } = env;
@@ -37,6 +38,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/companies", companyRoutes);
 
 interface HttpError extends Error {
   status?: number;

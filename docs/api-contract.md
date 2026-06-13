@@ -52,6 +52,18 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+## Company Management
+
+| Method | Endpoint                                    | Auth | Description         |
+| ------ | ------------------------------------------- | ---- | ------------------- |
+| POST   | [/companies](#companies-create-company)     | JWT  | Create company      |
+| GET    | [/companies](#companies-list-companies)     | JWT  | List companies      |
+| GET    | [/companies/:id](#companies-get-company)    | JWT  | Get company by ID   |
+| PUT    | [/companies/:id](#companies-update-company) | JWT  | Update company      |
+| DELETE | [/companies/:id](#companies-delete-company) | JWT  | Soft-delete company |
+
+---
+
 ## Detailed Endpoint Specifications
 
 <a id="auth-register"></a>
@@ -999,3 +1011,212 @@ _Note: If `status` changes, a new record is automatically logged to `Application
 - **`401 Unauthorized`**: Missing or invalid session tokens.
 - **`403 Forbidden`**: User is not the owner and not an admin.
 - **`404 Not Found`**: Application not found.
+
+---
+
+## Company Management Endpoint Specifications
+
+<a id="companies-create-company"></a>
+
+### 22. Create Company
+
+- **Endpoint:** `POST /companies`
+- **Auth Required:** JWT
+- **Request Body Schema (`application/json`):**
+  - `name` (string, required): Company name, min 1 character, max 200 characters. Unique (case-insensitive).
+  - `website` (string, optional): Valid URL format.
+  - `location` (string, optional): Company headquarters or location, max 200 characters.
+
+#### Request Example:
+
+```json
+{
+  "name": "Google",
+  "website": "https://google.com",
+  "location": "Mountain View, CA"
+}
+```
+
+#### Success Response (`201 Created`):
+
+```json
+{
+  "message": "Company created successfully",
+  "company": {
+    "id": "cuid-company-value",
+    "name": "Google",
+    "website": "https://google.com",
+    "location": "Mountain View, CA",
+    "createdAt": "2026-06-13T10:00:00.000Z",
+    "updatedAt": "2026-06-13T10:00:00.000Z"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error (Zod validation failed).
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`409 Conflict`**: Company name already exists.
+
+---
+
+<a id="companies-list-companies"></a>
+
+### 23. List Companies
+
+- **Endpoint:** `GET /companies`
+- **Auth Required:** JWT
+- **Request Query Parameters:**
+  - `page` (integer, optional): Page number, min 1. Default: `1`.
+  - `limit` (integer, optional): Items per page, min 1, max 100. Default: `10`.
+  - `search` (string, optional): Search by company name (case-insensitive).
+  - `userOnly` (boolean, optional): If `true`, only returns companies where the current user has active job applications. Default: `false`.
+  - `sortBy` (string, optional): Sort field: `name`, `createdAt`. Default: `name`.
+  - `order` (string, optional): Sort order: `asc` or `desc`. Default: `asc`.
+
+#### Request Example:
+
+`/api/companies?page=1&limit=10&search=Google&userOnly=true`
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Companies fetched successfully",
+  "companies": [
+    {
+      "id": "cuid-company-value",
+      "name": "Google",
+      "website": "https://google.com",
+      "location": "Mountain View, CA",
+      "createdAt": "2026-06-13T10:00:00.000Z",
+      "updatedAt": "2026-06-13T10:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Invalid query parameters.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+
+---
+
+<a id="companies-get-company"></a>
+
+### 24. Get Company By ID
+
+- **Endpoint:** `GET /companies/:id`
+- **Auth Required:** JWT
+- **Path Parameters:**
+  - `id` (string, required): The company CUID.
+
+#### Success Response (`200 OK`):
+
+_Note: Returns the company details along with the user's active (non-deleted) applications at this company._
+
+```json
+{
+  "message": "Company fetched successfully",
+  "company": {
+    "id": "cuid-company-value",
+    "name": "Google",
+    "website": "https://google.com",
+    "location": "Mountain View, CA",
+    "createdAt": "2026-06-13T10:00:00.000Z",
+    "updatedAt": "2026-06-13T10:00:00.000Z",
+    "applications": [
+      {
+        "id": "cuid-application-value",
+        "position": "Software Engineer",
+        "jobType": "FULL_TIME",
+        "status": "INTERVIEW",
+        "appliedDate": "2026-06-12T05:35:00.000Z",
+        "createdAt": "2026-06-12T05:35:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Invalid company ID.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Company not found or soft-deleted.
+
+---
+
+<a id="companies-update-company"></a>
+
+### 25. Update Company
+
+- **Endpoint:** `PUT /companies/:id`
+- **Auth Required:** JWT
+- **Path Parameters:**
+  - `id` (string, required): The company CUID.
+- **Request Body Schema (`application/json`):** All fields from Create Company are optional.
+
+#### Request Example:
+
+```json
+{
+  "name": "Google Inc.",
+  "location": "Mountain View, California"
+}
+```
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Company updated successfully",
+  "company": {
+    "id": "cuid-company-value",
+    "name": "Google Inc.",
+    "website": "https://google.com",
+    "location": "Mountain View, California",
+    "createdAt": "2026-06-13T10:00:00.000Z",
+    "updatedAt": "2026-06-13T10:35:00.000Z"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error or invalid ID.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Company not found or soft-deleted.
+- **`409 Conflict`**: Company name already taken.
+
+---
+
+<a id="companies-delete-company"></a>
+
+### 26. Delete Company
+
+- **Endpoint:** `DELETE /companies/:id`
+- **Auth Required:** JWT
+- **Path Parameters:**
+  - `id` (string, required): The company CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Company deleted successfully"
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Company not found.
