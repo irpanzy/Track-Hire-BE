@@ -4,7 +4,10 @@ import {
   createApplicationSchema,
   updateApplicationSchema,
   listApplicationsQuerySchema,
+  extractUrlSchema,
 } from "../schemas/application.schema";
+import { scrapeUrl } from "../utils/scraper";
+import { extractJobDetails } from "../utils/gemini";
 
 const APPLICATION_SELECT = {
   id: true,
@@ -413,5 +416,48 @@ export const deleteApplication = async (
     });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const extractApplicationFromUrl = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const { url } = extractUrlSchema.parse(req.body);
+
+    const cleanText = await scrapeUrl(url);
+
+    const extractedData = await extractJobDetails(cleanText, url);
+
+    const result = {
+      ...extractedData,
+      sourceUrl: url,
+    };
+
+    res.status(200).json({
+      message: "Job details extracted successfully",
+      data: result,
+    });
+  } catch (error) {
+    if (error && typeof error === "object" && "issues" in error) {
+      res.status(400).json({
+        message: "Validation failed",
+        errors: error,
+      });
+      return;
+    }
+
+    res.status(400).json({
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to extract job details",
+    });
   }
 };

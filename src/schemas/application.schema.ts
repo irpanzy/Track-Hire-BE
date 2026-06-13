@@ -119,3 +119,9 @@ export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
 export type ListApplicationsQueryInput = z.infer<
   typeof listApplicationsQuerySchema
 >;
+
+export const extractUrlSchema = z.object({
+  url: z.string().url("Invalid URL format"),
+});
+
+export type ExtractUrlInput = z.infer<typeof extractUrlSchema>;

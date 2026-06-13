@@ -2,35 +2,59 @@
 
 This document details the API contracts for the authentication services in the Track Hire backend application.
 
-## Base URL
+# Base URL
 
 `http://localhost:3000/api`
 
 ---
 
-## Endpoint Summary
+# Endpoint Summary
 
-| Method     | Endpoint                                          | Auth | Description                                        |
-| :--------- | :------------------------------------------------ | :--- | :------------------------------------------------- |
-| **POST**   | [`/auth/register`](#/auth/register)               | None | Register a new user account                        |
-| **POST**   | [`/auth/verify-email`](#/auth/verify-email)       | None | Verify user email address                          |
-| **POST**   | [`/auth/login`](#/auth/login)                     | None | Authenticate user using email/username & password  |
-| **POST**   | [`/auth/google`](#/auth/google)                   | None | Authenticate or register using Google Sign-In      |
-| **POST**   | [`/auth/forgot-password`](#/auth/forgot-password) | None | Request password reset verification link           |
-| **POST**   | [`/auth/reset-password`](#/auth/reset-password)   | None | Reset password using token                         |
-| **POST**   | [`/auth/logout`](#/auth/logout)                   | None | Logout user and clear auth cookies                 |
-| **POST**   | [`/auth/refresh`](#/auth/refresh)                 | None | Refresh access token using cookie refresh token    |
-| **GET**    | [`/auth/me`](#/auth/me)                           | JWT  | Fetch current authenticated user profile           |
-| **GET**    | [`/users`](#/users/list)                          | JWT  | List all users with pagination & filters (Admin)   |
-| **GET**    | [`/users/:id`](#/users/get)                       | JWT  | Get user profile by ID (Self or Admin)             |
-| **PUT**    | [`/users/:id`](#/users/update)                    | JWT  | Update user profile fields (Self or Admin)         |
-| **PUT**    | [`/users/:id/avatar`](#/users/upload-avatar)      | JWT  | Upload & resize avatar to ImageKit (Self or Admin) |
-| **DELETE** | [`/users/:id/avatar`](#/users/delete-avatar)      | JWT  | Delete user avatar (Self or Admin)                 |
-| **DELETE** | [`/users/:id`](#/users/delete)                    | JWT  | Soft delete a user account (Admin only)            |
+## Authentication
+
+| Method | Endpoint                                       | Auth | Description                                       |
+| ------ | ---------------------------------------------- | ---- | ------------------------------------------------- |
+| POST   | [/auth/register](#auth-register)               | None | Register a new user account                       |
+| POST   | [/auth/verify-email](#auth-verify-email)       | None | Verify user email address                         |
+| POST   | [/auth/login](#auth-login)                     | None | Authenticate user using email/username & password |
+| POST   | [/auth/google](#auth-google-auth)              | None | Authenticate using Google Sign-In                 |
+| POST   | [/auth/forgot-password](#auth-forgot-password) | None | Request password reset link                       |
+| POST   | [/auth/reset-password](#auth-reset-password)   | None | Reset password                                    |
+| POST   | [/auth/logout](#auth-logout)                   | None | Logout user                                       |
+| POST   | [/auth/refresh](#auth-refresh-token)           | None | Refresh access token                              |
+| GET    | [/auth/me](#auth-get-current-user)             | JWT  | Get current authenticated user                    |
+
+---
+
+## User Management
+
+| Method | Endpoint                                         | Auth  | Description         |
+| ------ | ------------------------------------------------ | ----- | ------------------- |
+| GET    | [/users](#users-list-users-admin-only)           | Admin | List all users      |
+| GET    | [/users/:id](#users-get-user-by-id)              | JWT   | Get user profile    |
+| PUT    | [/users/:id](#users-update-user-profile)         | JWT   | Update user profile |
+| PUT    | [/users/:id/avatar](#users-upload-user-avatar)   | JWT   | Upload avatar       |
+| DELETE | [/users/:id/avatar](#users-delete-user-avatar)   | JWT   | Delete avatar       |
+| DELETE | [/users/:id](#users-soft-delete-user-admin-only) | Admin | Soft delete user    |
+
+---
+
+## Application Management
+
+| Method | Endpoint                                                 | Auth | Description                  |
+| ------ | -------------------------------------------------------- | ---- | ---------------------------- |
+| POST   | [/applications](#applications-create-application)        | JWT  | Create application           |
+| POST   | [/applications/extract-url](#applications-extract-url)   | JWT  | Extract job details from URL |
+| GET    | [/applications](#applications-list-applications)         | JWT  | List applications            |
+| GET    | [/applications/:id](#applications-get-application-by-id) | JWT  | Get application detail       |
+| PUT    | [/applications/:id](#applications-update-application)    | JWT  | Update application           |
+| DELETE | [/applications/:id](#applications-delete-application)    | JWT  | Delete application           |
 
 ---
 
 ## Detailed Endpoint Specifications
+
+<a id="auth-register"></a>
 
 ### 1. Register User
 
@@ -93,6 +117,8 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+<a id="auth-verify-email"></a>
+
 ### 2. Verify Email
 
 - **Endpoint:** `POST /auth/verify-email`
@@ -126,6 +152,8 @@ This document details the API contracts for the authentication services in the T
   ```
 
 ---
+
+<a id="auth-login"></a>
 
 ### 3. Login
 
@@ -187,6 +215,8 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+<a id="auth-google-auth"></a>
+
 ### 4. Google Auth
 
 - **Endpoint:** `POST /auth/google`
@@ -233,6 +263,8 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+<a id="auth-forgot-password"></a>
+
 ### 5. Forgot Password
 
 - **Endpoint:** `POST /auth/forgot-password`
@@ -259,6 +291,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 ```
 
 ---
+
+<a id="auth-reset-password"></a>
 
 ### 6. Reset Password
 
@@ -296,6 +330,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 ---
 
+<a id="auth-logout"></a>
+
 ### 7. Logout
 
 - **Endpoint:** `POST /auth/logout`
@@ -316,6 +352,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 ```
 
 ---
+
+<a id="auth-refresh-token"></a>
 
 ### 8. Refresh Token
 
@@ -345,6 +383,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
   ```
 
 ---
+
+<a id="auth-get-current-user"></a>
 
 ### 9. Get Current User (Me)
 
@@ -388,6 +428,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 ---
 
 ## User Management Endpoint Specifications
+
+<a id="users-list-users-admin-only"></a>
 
 ### 10. List Users (Admin only)
 
@@ -438,6 +480,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 ---
 
+<a id="users-get-user-by-id"></a>
+
 ### 11. Get User By ID
 
 - **Endpoint:** `GET /users/:id`
@@ -470,6 +514,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 - **`404 Not Found`**: User not found or has been soft-deleted.
 
 ---
+
+<a id="users-update-user-profile"></a>
 
 ### 12. Update User Profile
 
@@ -517,6 +563,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 ---
 
+<a id="users-upload-user-avatar"></a>
+
 ### 13. Upload User Avatar
 
 - **Endpoint:** `PUT /users/:id/avatar`
@@ -552,6 +600,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 ---
 
+<a id="users-delete-user-avatar"></a>
+
 ### 14. Delete User Avatar
 
 - **Endpoint:** `DELETE /users/:id/avatar`
@@ -584,6 +634,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 ---
 
+<a id="users-soft-delete-user-admin-only"></a>
+
 ### 15. Soft Delete User (Admin only)
 
 - **Endpoint:** `DELETE /users/:id`
@@ -608,6 +660,8 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 ---
 
 ## Application Management Endpoint Specifications
+
+<a id="applications-create-application"></a>
 
 ### 16. Create Application
 
@@ -686,7 +740,55 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 ---
 
-### 17. List Applications
+<a id="applications-extract-url"></a>
+
+### 17. Extract Job Details From URL
+
+- **Endpoint:** `POST /applications/extract-url`
+- **Auth Required:** JWT
+- **Request Body Schema (`application/json`):**
+  - `url` (string, required): The job posting page URL to extract details from. Must be a valid URL format.
+
+#### Request Example:
+
+```json
+{
+  "url": "https://www.linkedin.com/jobs/view/1234567890/"
+}
+```
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Job details extracted successfully",
+  "data": {
+    "companyName": "Google",
+    "companyWebsite": "https://about.google",
+    "companyLocation": "Mountain View, CA",
+    "position": "Software Engineer",
+    "jobType": "FULL_TIME",
+    "location": "Jakarta, Indonesia",
+    "source": "LINKEDIN",
+    "sourceUrl": "https://www.linkedin.com/jobs/view/1234567890/",
+    "description": "We are looking for a Software Engineer...",
+    "requirements": "Strong programming skills in Node.js or TypeScript...",
+    "salaryRange": "15.000.000 - 25.000.000",
+    "deadlineDate": "2026-07-31"
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error (invalid URL, missing fields) or extraction failed (scraper blocked, Gemini API key missing/invalid, or parsing error).
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+
+---
+
+<a id="applications-list-applications"></a>
+
+### 18. List Applications
 
 - **Endpoint:** `GET /applications`
 - **Auth Required:** JWT
@@ -751,7 +853,9 @@ _Note: Regular users only see their own applications. Admins can see all applica
 
 ---
 
-### 18. Get Application By ID
+<a id="applications-get-application-by-id"></a>
+
+### 19. Get Application By ID
 
 - **Endpoint:** `GET /applications/:id`
 - **Auth Required:** JWT (Owner or ADMIN)
@@ -813,7 +917,9 @@ _Note: Regular users only see their own applications. Admins can see all applica
 
 ---
 
-### 19. Update Application
+<a id="applications-update-application"></a>
+
+### 20. Update Application
 
 - **Endpoint:** `PUT /applications/:id`
 - **Auth Required:** JWT (Owner or ADMIN)
@@ -871,7 +977,9 @@ _Note: If `status` changes, a new record is automatically logged to `Application
 
 ---
 
-### 20. Delete Application
+<a id="applications-delete-application"></a>
+
+### 21. Delete Application
 
 - **Endpoint:** `DELETE /applications/:id`
 - **Auth Required:** JWT (Owner or ADMIN)

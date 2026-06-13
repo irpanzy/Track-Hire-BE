@@ -9,7 +9,7 @@ function requireEnv(key: string): string {
 }
 
 export const env = {
-  PORT: Number(process.env.PORT) || 3000,
+  PORT: Number(process.env.PORT),
   NODE_ENV:
     (process.env.NODE_ENV as "development" | "production" | "test") ||
     "development",
@@ -42,6 +42,7 @@ export const env = {
 
   IMAGEKIT_PRIVATE_KEY: requireEnv("IMAGEKIT_PRIVATE_KEY"),
   MAX_FILE_SIZE: Number(process.env.MAX_FILE_SIZE),
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 
   get isProduction() {
     return this.NODE_ENV === "production";
