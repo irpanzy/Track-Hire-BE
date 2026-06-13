@@ -274,7 +274,7 @@ curl http://localhost:3000/api/dashboard/stats \
 ```bash
 # Extract URL 11 times (11th should fail with 429)
 for i in {1..11}; do
-  curl -X POST http://localhost:3000/api/applications/extract \
+  curl -X POST http://localhost:3000/api/applications/extract-url \
     -H "Authorization: Bearer YOUR_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"url": "https://example.com/job"}';

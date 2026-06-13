@@ -367,12 +367,15 @@ To view the complete schema: `prisma/schema.prisma`
 - `POST /api/applications` - Create application
 - `PUT /api/applications/:id` - Update application
 - `DELETE /api/applications/:id` - Delete application
-- `POST /api/applications/extract` - Extract job details from URL (AI)
+- `POST /api/applications/extract-url` - Extract job details from URL (AI)
 
 ### Companies
 
 - `GET /api/companies` - List companies
 - `GET /api/companies/:id` - Get company details
+- `POST /api/companies` - Create company
+- `PUT /api/companies/:id` - Update company
+- `DELETE /api/companies/:id` - Delete company
 
 ### Dashboard
 
@@ -386,13 +389,17 @@ To view the complete schema: `prisma/schema.prisma`
 - `PUT /api/reminders/:id` - Update reminder
 - `DELETE /api/reminders/:id` - Delete reminder
 
+### Users
+
+- `GET /api/users/:id` - Get user profile
+- `PUT /api/users/:id` - Update profile
+- `PUT /api/users/:id/avatar` - Upload profile picture
+- `DELETE /api/users/:id/avatar` - Delete profile picture
+
 ### Users (Admin Only)
 
 - `GET /api/users` - List all users
-- `GET /api/users/:id` - Get user details
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
-- `POST /api/users/:id/avatar` - Upload avatar
+- `DELETE /api/users/:id` - Soft delete user
 
 For detailed API documentation, visit http://localhost:3000/api-docs
 
@@ -409,7 +416,7 @@ For detailed API documentation, visit http://localhost:3000/api-docs
 ```bash
 # Extract same URL 11 times within an hour
 for i in {1..11}; do
-  curl -X POST http://localhost:3000/api/applications/extract \
+  curl -X POST http://localhost:3000/api/applications/extract-url \
     -H "Authorization: Bearer YOUR_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"url": "https://example.com/job"}';
