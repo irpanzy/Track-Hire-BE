@@ -76,6 +76,14 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+## Dashboard Module
+
+| Method | Endpoint                                 | Auth | Description                         |
+| ------ | ---------------------------------------- | ---- | ----------------------------------- |
+| GET    | [/dashboard/stats](#dashboard-get-stats) | JWT  | Get dashboard statistics and trends |
+
+---
+
 ## Detailed Endpoint Specifications
 
 <a id="auth-register"></a>
@@ -1471,3 +1479,55 @@ _Note: Returns the company details along with the user's active (non-deleted) ap
 
 - **`401 Unauthorized`**: Missing or invalid session tokens.
 - **`404 Not Found`**: Reminder not found.
+
+---
+
+<a id="dashboard-get-stats"></a>
+
+### 32. Get Dashboard Stats
+
+- **Endpoint:** `GET /dashboard/stats`
+- **Auth Required:** JWT
+- **Query Parameters:** None
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Dashboard stats fetched successfully",
+  "data": {
+    "totalApplications": 12,
+    "statusDistribution": {
+      "APPLIED": 5,
+      "INTERVIEW": 3,
+      "REJECTED": 4
+    },
+    "sourceDistribution": {
+      "LINKEDIN": 8,
+      "GLINTS": 4
+    },
+    "recentApplications": [
+      {
+        "id": "clxyz_app_1",
+        "position": "Backend Developer",
+        "status": "APPLIED",
+        "appliedDate": "2026-06-13T10:00:00.000Z",
+        "company": {
+          "name": "Google"
+        }
+      }
+    ],
+    "monthlyTrend": [
+      {
+        "month": "Jun 2026",
+        "count": 4
+      }
+    ]
+  }
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`500 Internal Server Error`**: Unexpected error.
