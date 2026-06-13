@@ -64,6 +64,18 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+## Reminder Management
+
+| Method | Endpoint                                     | Auth | Description          |
+| ------ | -------------------------------------------- | ---- | -------------------- |
+| POST   | [/reminders](#reminders-create-reminder)     | JWT  | Create reminder      |
+| GET    | [/reminders](#reminders-list-reminders)      | JWT  | List reminders       |
+| GET    | [/reminders/:id](#reminders-get-reminder)    | JWT  | Get reminder by ID   |
+| PUT    | [/reminders/:id](#reminders-update-reminder) | JWT  | Update reminder      |
+| DELETE | [/reminders/:id](#reminders-delete-reminder) | JWT  | Soft-delete reminder |
+
+---
+
 ## Detailed Endpoint Specifications
 
 <a id="auth-register"></a>
@@ -1220,3 +1232,242 @@ _Note: Returns the company details along with the user's active (non-deleted) ap
 
 - **`401 Unauthorized`**: Missing or invalid session tokens.
 - **`404 Not Found`**: Company not found.
+
+---
+
+## Reminder Management Endpoint Specifications
+
+<a id="reminders-create-reminder"></a>
+
+### 27. Create Reminder
+
+- **Endpoint:** `POST /reminders`
+- **Auth Required:** JWT
+- **Request Body Schema (`application/json`):**
+  - `title` (string, required): Title of the reminder, min 1 character, max 100 characters.
+  - `description` (string, optional): Detailed description, max 1000 characters.
+  - `reminderDate` (string/datetime, required): Date and time for the reminder (ISO format).
+  - `applicationId` (string, optional): The CUID of the associated job application. Must belong to the user.
+
+#### Request Example:
+
+```json
+{
+  "title": "HR Interview Follow-up",
+  "description": "Send a thank-you email and ask for updates",
+  "reminderDate": "2026-06-15T09:00:00.000Z",
+  "applicationId": "clxyz_app_1"
+}
+```
+
+#### Success Response (`201 Created`):
+
+```json
+{
+  "message": "Reminder created successfully",
+  "reminder": {
+    "id": "cuid-reminder-value",
+    "userId": "cuid-user-value",
+    "applicationId": "clxyz_app_1",
+    "title": "HR Interview Follow-up",
+    "description": "Send a thank-you email and ask for updates",
+    "reminderDate": "2026-06-15T09:00:00.000Z",
+    "isDone": false,
+    "createdAt": "2026-06-13T10:00:00.000Z",
+    "updatedAt": "2026-06-13T10:00:00.000Z",
+    "application": {
+      "id": "clxyz_app_1",
+      "position": "Backend Developer",
+      "company": {
+        "name": "PT Teknologi Indonesia"
+      }
+    }
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error (Zod validation failed).
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Job application not found (or does not belong to the user).
+
+---
+
+<a id="reminders-list-reminders"></a>
+
+### 28. List Reminders
+
+- **Endpoint:** `GET /reminders`
+- **Auth Required:** JWT
+- **Request Query Parameters:**
+  - `page` (integer, optional): Page number, min 1. Default: `1`.
+  - `limit` (integer, optional): Items per page, min 1, max 100. Default: `10`.
+  - `isDone` (boolean, optional): Filter by completion status.
+  - `applicationId` (string, optional): Filter by linked job application ID.
+  - `upcoming` (boolean, optional): If `true`, only returns future pending reminders (`reminderDate` >= now, `isDone` = false). Default: `false`.
+  - `sortBy` (string, optional): Sort field: `reminderDate`, `createdAt`. Default: `reminderDate`.
+  - `order` (string, optional): Sort order: `asc` or `desc`. Default: `asc`.
+
+#### Request Example:
+
+`/api/reminders?page=1&limit=10&upcoming=true`
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Reminders fetched successfully",
+  "reminders": [
+    {
+      "id": "cuid-reminder-value",
+      "userId": "cuid-user-value",
+      "applicationId": "clxyz_app_1",
+      "title": "HR Interview Follow-up",
+      "description": "Send a thank-you email and ask for updates",
+      "reminderDate": "2026-06-15T09:00:00.000Z",
+      "isDone": false,
+      "createdAt": "2026-06-13T10:00:00.000Z",
+      "updatedAt": "2026-06-13T10:00:00.000Z",
+      "application": {
+        "id": "clxyz_app_1",
+        "position": "Backend Developer",
+        "company": {
+          "name": "PT Teknologi Indonesia"
+        }
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Invalid query parameters.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+
+---
+
+<a id="reminders-get-reminder"></a>
+
+### 29. Get Reminder By ID
+
+- **Endpoint:** `GET /reminders/:id`
+- **Auth Required:** JWT (Owner only)
+- **Path Parameters:**
+  - `id` (string, required): The reminder CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Reminder fetched successfully",
+  "reminder": {
+    "id": "cuid-reminder-value",
+    "userId": "cuid-user-value",
+    "applicationId": "clxyz_app_1",
+    "title": "HR Interview Follow-up",
+    "description": "Send a thank-you email and check status.",
+    "reminderDate": "2026-06-15T09:00:00.000Z",
+    "isDone": false,
+    "createdAt": "2026-06-13T10:00:00.000Z",
+    "updatedAt": "2026-06-13T10:00:00.000Z",
+    "application": {
+      "id": "clxyz_app_1",
+      "position": "Backend Developer",
+      "company": {
+        "name": "PT Teknologi Indonesia"
+      }
+    }
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Invalid reminder ID.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Reminder not found or not owned by user.
+
+---
+
+<a id="reminders-update-reminder"></a>
+
+### 30. Update Reminder
+
+- **Endpoint:** `PUT /reminders/:id`
+- **Auth Required:** JWT (Owner only)
+- **Path Parameters:**
+  - `id` (string, required): The reminder CUID.
+- **Request Body Schema (`application/json`):** All fields from Create Reminder are optional. Can also update:
+  - `isDone` (boolean, optional): Toggle status.
+
+#### Request Example:
+
+```json
+{
+  "isDone": true
+}
+```
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Reminder updated successfully",
+  "reminder": {
+    "id": "cuid-reminder-value",
+    "userId": "cuid-user-value",
+    "applicationId": "clxyz_app_1",
+    "title": "HR Interview Follow-up",
+    "description": "Send a thank-you email and check status.",
+    "reminderDate": "2026-06-15T09:00:00.000Z",
+    "isDone": true,
+    "createdAt": "2026-06-13T10:00:00.000Z",
+    "updatedAt": "2026-06-13T10:15:00.000Z",
+    "application": {
+      "id": "clxyz_app_1",
+      "position": "Backend Developer",
+      "company": {
+        "name": "PT Teknologi Indonesia"
+      }
+    }
+  }
+}
+```
+
+#### Error Responses:
+
+- **`400 Bad Request`**: Validation error or invalid ID.
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Reminder or Job application not found.
+
+---
+
+<a id="reminders-delete-reminder"></a>
+
+### 31. Delete Reminder
+
+- **Endpoint:** `DELETE /reminders/:id`
+- **Auth Required:** JWT (Owner only)
+- **Path Parameters:**
+  - `id` (string, required): The reminder CUID.
+
+#### Success Response (`200 OK`):
+
+```json
+{
+  "message": "Reminder deleted successfully"
+}
+```
+
+#### Error Responses:
+
+- **`401 Unauthorized`**: Missing or invalid session tokens.
+- **`404 Not Found`**: Reminder not found.

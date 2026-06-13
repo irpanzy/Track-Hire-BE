@@ -8,6 +8,7 @@ import authRoutes from "./src/routes/auth.routes";
 import userRoutes from "./src/routes/user.routes";
 import applicationRoutes from "./src/routes/application.routes";
 import companyRoutes from "./src/routes/company.routes";
+import reminderRoutes from "./src/routes/reminder.routes";
 
 const app = express();
 const { PORT } = env;
@@ -39,6 +40,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/companies", companyRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 interface HttpError extends Error {
   status?: number;

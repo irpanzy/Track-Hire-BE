@@ -1743,6 +1743,225 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/reminders": {
+      post: {
+        tags: ["Reminders"],
+        summary: "Create a new reminder",
+        description:
+          "Creates a new reminder. Requires authentication. Can optionally link to a job application owned by the user.",
+        security: [{ cookieAccessToken: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateReminderRequest" },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Reminder created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    reminder: { $ref: "#/components/schemas/Reminder" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description:
+              "Job application not found (if applicationId provided does not exist or belong to the user)",
+          },
+        },
+      },
+      get: {
+        tags: ["Reminders"],
+        summary: "List reminders",
+        description:
+          "Retrieve a paginated list of reminders for the current user. Filters by completion status (isDone), specific application, or upcoming status are supported.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10 },
+          },
+          { name: "isDone", in: "query", schema: { type: "boolean" } },
+          { name: "applicationId", in: "query", schema: { type: "string" } },
+          {
+            name: "upcoming",
+            in: "query",
+            schema: { type: "boolean", default: false },
+            description: "If true, only returns future pending reminders",
+          },
+          {
+            name: "sortBy",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["reminderDate", "createdAt"],
+              default: "reminderDate",
+            },
+          },
+          {
+            name: "order",
+            in: "query",
+            schema: { type: "string", enum: ["asc", "desc"], default: "asc" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reminders fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    reminders: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Reminder" },
+                    },
+                    pagination: { $ref: "#/components/schemas/Pagination" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
+    "/api/reminders/{id}": {
+      get: {
+        tags: ["Reminders"],
+        summary: "Get reminder by ID",
+        description:
+          "Retrieve a single reminder detail. Only accessible by the owner.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reminder fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    reminder: { $ref: "#/components/schemas/Reminder" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Reminder not found",
+          },
+        },
+      },
+      put: {
+        tags: ["Reminders"],
+        summary: "Update reminder",
+        description:
+          "Update reminder details. Can toggle status, edit date, title, or linked job application.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateReminderRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Reminder updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    reminder: { $ref: "#/components/schemas/Reminder" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Reminder or Job application not found",
+          },
+        },
+      },
+      delete: {
+        tags: ["Reminders"],
+        summary: "Delete reminder",
+        description: "Soft-delete a reminder record.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reminder deleted successfully",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Reminder not found",
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2375,6 +2594,66 @@ const swaggerDefinition = {
           },
         },
       },
+
+      CreateReminderRequest: {
+        type: "object",
+        required: ["title", "reminderDate"],
+        properties: {
+          title: {
+            type: "string",
+            minLength: 1,
+            maxLength: 100,
+            example: "HR Interview Follow-up",
+          },
+          description: {
+            type: "string",
+            maxLength: 1000,
+            nullable: true,
+            example: "Send thank-you email and check status.",
+          },
+          reminderDate: {
+            type: "string",
+            format: "date-time",
+            example: "2026-06-15T09:00:00.000Z",
+          },
+          applicationId: {
+            type: "string",
+            nullable: true,
+            example: "clxyz_app_1",
+          },
+        },
+      },
+      UpdateReminderRequest: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            minLength: 1,
+            maxLength: 100,
+            example: "HR Interview Follow-up",
+          },
+          description: {
+            type: "string",
+            maxLength: 1000,
+            nullable: true,
+            example: "Send thank-you email and check status.",
+          },
+          reminderDate: {
+            type: "string",
+            format: "date-time",
+            example: "2026-06-15T09:00:00.000Z",
+          },
+          isDone: {
+            type: "boolean",
+            example: true,
+          },
+          applicationId: {
+            type: "string",
+            nullable: true,
+            example: "clxyz_app_1",
+          },
+        },
+      },
     },
   },
   tags: [
@@ -2400,7 +2679,8 @@ const swaggerDefinition = {
     },
     {
       name: "Reminders",
-      description: "Reminder management (coming soon)",
+      description:
+        "Reminder management — list, view, create, update, and soft-delete reminders",
     },
   ],
 };
