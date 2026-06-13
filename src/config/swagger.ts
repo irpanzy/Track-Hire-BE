@@ -1212,6 +1212,114 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/applications/extract-url": {
+      post: {
+        tags: ["Applications"],
+        summary: "Extract job application details from URL using AI",
+        description:
+          "Scrapes the job posting page from the provided URL using Cheerio, then processes the text using Gemini AI to extract structured job application fields. Returns the extracted fields for review without saving them to the database.",
+        security: [{ cookieAccessToken: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["url"],
+                properties: {
+                  url: {
+                    type: "string",
+                    format: "uri",
+                    example: "https://www.linkedin.com/jobs/view/1234567890/",
+                    description: "The job posting URL to extract details from",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Job details extracted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        companyName: { type: "string", example: "Google" },
+                        companyWebsite: {
+                          type: "string",
+                          format: "uri",
+                          nullable: true,
+                          example: "https://about.google",
+                        },
+                        companyLocation: {
+                          type: "string",
+                          nullable: true,
+                          example: "Mountain View, CA",
+                        },
+                        position: {
+                          type: "string",
+                          example: "Software Engineer",
+                        },
+                        jobType: { $ref: "#/components/schemas/JobType" },
+                        location: {
+                          type: "string",
+                          nullable: true,
+                          example: "Jakarta, Indonesia",
+                        },
+                        source: {
+                          $ref: "#/components/schemas/ApplicationSource",
+                        },
+                        sourceUrl: {
+                          type: "string",
+                          format: "uri",
+                          example:
+                            "https://www.linkedin.com/jobs/view/1234567890/",
+                        },
+                        description: { type: "string", nullable: true },
+                        requirements: { type: "string", nullable: true },
+                        salaryRange: {
+                          type: "string",
+                          nullable: true,
+                          example: "15.000.000 - 25.000.000",
+                        },
+                        deadlineDate: {
+                          type: "string",
+                          nullable: true,
+                          example: "2026-07-31",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error or extraction failed (e.g. invalid URL, scraper blocked, or Gemini key not set)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
     "/api/applications/{id}": {
       get: {
         tags: ["Applications"],
