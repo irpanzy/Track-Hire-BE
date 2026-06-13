@@ -8,6 +8,13 @@ import {
 } from "../schemas/application.schema";
 import { scrapeUrl } from "../utils/scraper";
 import { extractJobDetails } from "../utils/gemini";
+import {
+  deleteCache,
+  getCache,
+  setCache,
+  checkRateLimit,
+} from "../utils/redis";
+import { createHash } from "crypto";
 
 const APPLICATION_SELECT = {
   id: true,
@@ -131,6 +138,8 @@ export const createApplication = async (
       },
       select: APPLICATION_SELECT,
     });
+
+    await deleteCache(`dashboard:stats:${req.user.id}`);
 
     res.status(201).json({
       message: "Application created successfully",
@@ -361,6 +370,8 @@ export const updateApplication = async (
       select: APPLICATION_SELECT,
     });
 
+    await deleteCache(`dashboard:stats:${req.user.id}`);
+
     res.status(200).json({
       message: "Application updated successfully",
       application,
@@ -411,6 +422,8 @@ export const deleteApplication = async (
       data: { deletedAt: new Date() },
     });
 
+    await deleteCache(`dashboard:stats:${req.user.id}`);
+
     res.status(200).json({
       message: "Application deleted successfully",
     });
@@ -431,9 +444,37 @@ export const extractApplicationFromUrl = async (
 
     const { url } = extractUrlSchema.parse(req.body);
 
-    const cleanText = await scrapeUrl(url);
+    const rateLimitKey = `ai-import:rate:${req.user.id}`;
+    const rateLimit = await checkRateLimit(rateLimitKey, 10, 3600);
 
+    if (!rateLimit.allowed) {
+      res.status(429).json({
+        message: "Rate limit exceeded. You can extract up to 10 URLs per hour.",
+        retryAfter: 3600,
+      });
+      return;
+    }
+
+    const urlHash = createHash("sha256").update(url).digest("hex");
+    const cacheKey = `ai-import:${urlHash}`;
+
+    const cachedData = await getCache<any>(cacheKey);
+
+    if (cachedData) {
+      res.status(200).json({
+        message: "Job details extracted successfully (cached)",
+        data: {
+          ...cachedData,
+          sourceUrl: url,
+        },
+      });
+      return;
+    }
+
+    const cleanText = await scrapeUrl(url);
     const extractedData = await extractJobDetails(cleanText, url);
+
+    await setCache(cacheKey, extractedData, 604800);
 
     const result = {
       ...extractedData,
