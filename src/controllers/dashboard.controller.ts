@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../../lib/prisma";
+import { getCache, setCache } from "../utils/redis";
 
 export const getDashboardStats = async (
   req: Request,
@@ -8,6 +9,17 @@ export const getDashboardStats = async (
   try {
     if (!req.user) {
       res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const cacheKey = `dashboard:stats:${req.user.id}`;
+    const cachedStats = await getCache<any>(cacheKey);
+
+    if (cachedStats) {
+      res.status(200).json({
+        message: "Dashboard statistics fetched successfully (cached)",
+        data: cachedStats,
+      });
       return;
     }
 
@@ -104,15 +116,19 @@ export const getDashboardStats = async (
       count: monthlyTrend[month],
     }));
 
+    const statsData = {
+      totalApplications,
+      statusDistribution,
+      sourceDistribution,
+      recentApplications,
+      monthlyTrend: monthlyTrendData,
+    };
+
+    await setCache(cacheKey, statsData, 300);
+
     res.status(200).json({
       message: "Dashboard statistics fetched successfully",
-      data: {
-        totalApplications,
-        statusDistribution,
-        sourceDistribution,
-        recentApplications,
-        monthlyTrend: monthlyTrendData,
-      },
+      data: statsData,
     });
   } catch (error) {
     res.status(500).json({

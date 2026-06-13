@@ -2,4 +2,9 @@ node_modules/
 dist/
 /src/generated/prisma
 /generated/prisma
+
+# Environment files
 .env
+.env.docker
+.env.local
+.env.*.local

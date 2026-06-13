@@ -44,6 +44,9 @@ export const env = {
   MAX_FILE_SIZE: Number(process.env.MAX_FILE_SIZE),
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 
+  REDIS_URL: requireEnv("REDIS_URL"),
+  RABBITMQ_URL: requireEnv("RABBITMQ_URL"),
+
   get isProduction() {
     return this.NODE_ENV === "production";
   },

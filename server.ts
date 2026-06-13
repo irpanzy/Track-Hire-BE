@@ -10,6 +10,9 @@ import applicationRoutes from "./src/routes/application.routes";
 import companyRoutes from "./src/routes/company.routes";
 import reminderRoutes from "./src/routes/reminder.routes";
 import dashboardRoutes from "./src/routes/dashboard.routes";
+import { redisClient } from "./src/utils/redis";
+import { rabbitmqClient } from "./src/utils/rabbitmq";
+import { startEmailWorker } from "./src/workers/email.worker";
 
 const app = express();
 const { PORT } = env;
@@ -62,6 +65,39 @@ app.use(
   }
 );
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+async function startServer() {
+  try {
+    console.log("🔄 Connecting to Redis...");
+    await redisClient.connect();
+
+    console.log("🔄 Connecting to RabbitMQ...");
+    await rabbitmqClient.connect();
+
+    console.log("🔄 Starting background workers...");
+    await startEmailWorker();
+
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on http://localhost:${PORT}`);
+      console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+process.on("SIGINT", async () => {
+  console.log("\n⚠️  Shutting down gracefully...");
+  await redisClient.disconnect();
+  await rabbitmqClient.disconnect();
+  process.exit(0);
 });
+
+process.on("SIGTERM", async () => {
+  console.log("\n⚠️  Shutting down gracefully...");
+  await redisClient.disconnect();
+  await rabbitmqClient.disconnect();
+  process.exit(0);
+});
+
+startServer();

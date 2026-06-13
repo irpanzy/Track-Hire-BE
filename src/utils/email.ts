@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const createEmailTemplate = (title: string, body: string): string => `
+export const createEmailTemplate = (title: string, body: string): string => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -102,6 +102,23 @@ export const sendPasswordResetEmail = async ({
     from: `"Track Hire" <${env.SMTP_USER}>`,
     to,
     subject: "Reset Your Password - Track Hire",
+    html,
+  });
+};
+
+export const sendEmail = async ({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<void> => {
+  await transporter.sendMail({
+    from: `"Track Hire" <${env.SMTP_USER}>`,
+    to,
+    subject,
     html,
   });
 };

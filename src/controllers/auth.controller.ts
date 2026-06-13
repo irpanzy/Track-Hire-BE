@@ -18,9 +18,14 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { createVerificationToken, validateToken } from "../utils/token";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../utils/email";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  createEmailTemplate,
+} from "../utils/email";
 import { env } from "../config/env";
 import { TokenPayload } from "../models/auth.model";
+import { publishToQueue, QUEUES } from "../utils/rabbitmq";
 
 const SALT_ROUNDS = 10;
 
@@ -115,11 +120,54 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       userId: user.id,
       type: "EMAIL_VERIFICATION",
     });
-    await sendVerificationEmail({
-      to: user.email,
-      name: user.name,
-      token,
-    });
+
+    const verifyUrl = `${env.CLIENT_URL}/verify-email?token=${token}`;
+    const emailHtml = createEmailTemplate(
+      "Verify Your Email",
+      `
+      <p>Hi <strong>${name}</strong>,</p>
+      <p>Thank you for registering at Track Hire! Please verify your email address by clicking the button below:</p>
+      <p style="text-align: center;">
+        <a href="${verifyUrl}" class="button">Verify Email</a>
+      </p>
+      <p>Or copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #667eea; font-size: 14px;">${verifyUrl}</p>
+      <p>This link will expire in <strong>24 hours</strong>.</p>
+      `
+    );
+
+    try {
+      await publishToQueue(QUEUES.EMAIL_JOBS, {
+        to: user.email,
+        subject: "Verify Your Email - Track Hire",
+        html: emailHtml,
+      });
+    } catch (queueError) {
+      if (env.isProduction) {
+        await prisma.verificationToken.deleteMany({
+          where: { userId: user.id },
+        });
+
+        await prisma.user.delete({
+          where: { id: user.id },
+        });
+
+        console.error("Failed to publish email job in production:", queueError);
+        res.status(503).json({
+          message: "Service temporarily unavailable. Please try again later.",
+        });
+        return;
+      }
+
+      console.warn("Failed to publish email job in development:", queueError);
+      console.log("Fallback: Sending email directly");
+
+      await sendVerificationEmail({
+        to: user.email,
+        name: user.name,
+        token,
+      });
+    }
 
     res.status(201).json({
       message:
@@ -350,11 +398,50 @@ export const forgotPassword = async (
       userId: user.id,
       type: "PASSWORD_RESET",
     });
-    await sendPasswordResetEmail({
-      to: user.email,
-      name: user.name,
-      token,
-    });
+
+    const resetUrl = `${env.CLIENT_URL}/reset-password?token=${token}`;
+    const emailHtml = createEmailTemplate(
+      "Reset Your Password",
+      `
+      <p>Hi <strong>${user.name}</strong>,</p>
+      <p>We received a request to reset your password. Click the button below to create a new password:</p>
+      <p style="text-align: center;">
+        <a href="${resetUrl}" class="button">Reset Password</a>
+      </p>
+      <p>Or copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #667eea; font-size: 14px;">${resetUrl}</p>
+      <p>This link will expire in <strong>1 hour</strong>.</p>
+      `
+    );
+
+    try {
+      await publishToQueue(QUEUES.EMAIL_JOBS, {
+        to: user.email,
+        subject: "Reset Your Password - Track Hire",
+        html: emailHtml,
+      });
+    } catch (queueError) {
+      if (env.isProduction) {
+        await prisma.verificationToken.deleteMany({
+          where: { userId: user.id, type: "PASSWORD_RESET" },
+        });
+
+        console.error("Failed to publish email job in production:", queueError);
+        res.status(503).json({
+          message: "Service temporarily unavailable. Please try again later.",
+        });
+        return;
+      }
+
+      console.warn("Failed to publish email job in development:", queueError);
+      console.log("Fallback: Sending email directly");
+
+      await sendPasswordResetEmail({
+        to: user.email,
+        name: user.name,
+        token,
+      });
+    }
 
     res.status(200).json({
       message:
