@@ -35,14 +35,17 @@ export const env = {
   SMTP_USER: requireEnv("SMTP_USER"),
   SMTP_PASS: requireEnv("SMTP_PASS"),
 
+  SMTP_FROM_NAME: requireEnv("SMTP_FROM_NAME"),
+  SUPPORT_EMAIL: requireEnv("SUPPORT_EMAIL"),
+
   GOOGLE_CLIENT_ID: requireEnv("GOOGLE_CLIENT_ID"),
 
   EMAIL_VERIFICATION_EXPIRY: requireEnv("EMAIL_VERIFICATION_EXPIRY"),
   PASSWORD_RESET_EXPIRY: requireEnv("PASSWORD_RESET_EXPIRY"),
 
   IMAGEKIT_PRIVATE_KEY: requireEnv("IMAGEKIT_PRIVATE_KEY"),
-  MAX_FILE_SIZE: Number(process.env.MAX_FILE_SIZE),
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  MAX_FILE_SIZE: Number(requireEnv("MAX_FILE_SIZE")),
+  GEMINI_API_KEY: requireEnv("GEMINI_API_KEY"),
 
   REDIS_URL: requireEnv("REDIS_URL"),
   RABBITMQ_URL: requireEnv("RABBITMQ_URL"),
