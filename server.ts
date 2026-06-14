@@ -17,10 +17,31 @@ import { startEmailWorker } from "./src/workers/email.worker";
 const app = express();
 const { PORT } = env;
 
+const allowedOrigins = env.CLIENT_URL.split(",").map((url) => url.trim());
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (env.NODE_ENV === "development") {
+        const isLocalhost =
+          origin.includes("localhost") || origin.includes("127.0.0.1");
+        if (isLocalhost) return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
+    maxAge: 86400,
   })
 );
 app.use(express.json());

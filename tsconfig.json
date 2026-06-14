@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "module": "CommonJS",
-    "moduleResolution": "node",
     "target": "ES2023",
     "outDir": "./dist",
     "rootDir": ".",
@@ -9,8 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "ignoreDeprecations": "6.0"
+    "allowSyntheticDefaultImports": true
   },
   "include": ["server.ts", "src/**/*", "lib/**/*", "prisma.config.ts"],
   "exclude": ["node_modules", "dist", "prisma/migrations"]

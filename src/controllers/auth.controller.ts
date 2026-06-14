@@ -360,6 +360,7 @@ export const googleAuth = async (
       },
     });
   } catch (error) {
+    console.error("GOOGLE AUTH ERROR:", error);
     res.status(401).json({
       message:
         error instanceof Error ? error.message : "Google authentication failed",
