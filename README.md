@@ -500,11 +500,30 @@ For more troubleshooting, see [docker-setup.md](./docs/docker-setup.md)
 
 ## 📝 Additional Documentation
 
-- [docs/docker-setup.md](./docs/docker-setup.md) - Complete Docker setup guide
-- [docs/docker-implementation.md](./docs/docker-implementation.md) - Implementation details
-- [docs/implementation-summary.md](./docs/implementation-summary.md) - Redis & RabbitMQ implementation
+### Setup & Development
+
+- [docs/development-setup.md](./docs/development-setup.md) - Complete development setup guide
 - [docs/quickstart.md](./docs/quickstart.md) - Quick start guide
+- [docs/implementation-summary.md](./docs/implementation-summary.md) - Redis & RabbitMQ implementation
+- [docs/final-summary.md](./docs/final-summary.md) - Project summary
+
+### Email Configuration
+
+- [docs/email-quick-reference.md](./docs/email-quick-reference.md) - ⚡ Quick reference card
+- [docs/gmail-custom-domain-setup.md](./docs/gmail-custom-domain-setup.md) - Gmail SMTP + Cloudflare setup
+- [docs/test-email-setup.md](./docs/test-email-setup.md) - Email testing guide
+- [docs/final-email-setup-summary.md](./docs/final-email-setup-summary.md) - Complete email summary
+- [docs/email-visual-comparison.md](./docs/email-visual-comparison.md) - Email design comparison
+- [docs/email-best-practices.md](./docs/email-best-practices.md) - Email best practices
+- [docs/anti-spam-guide.md](./docs/anti-spam-guide.md) - Anti-spam strategies
+- [docs/for-users-email-whitelist.md](./docs/for-users-email-whitelist.md) - User email whitelist guide
+
+### API & CORS Documentation
+
 - [docs/api-contract.md](./docs/api-contract.md) - API contract specifications
+- [docs/cors-configuration.md](./docs/cors-configuration.md) - ⚡ CORS setup and troubleshooting
+- [docs/setup-custom-domain-email.md](./docs/setup-custom-domain-email.md) - Custom domain email options
+- [docs/quick-custom-domain-setup.md](./docs/quick-custom-domain-setup.md) - Quick domain setup
 
 ## 🤝 Contributing
 
