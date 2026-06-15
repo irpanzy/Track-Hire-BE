@@ -16,6 +16,13 @@ The Track Hire API supports **Cross-Origin Resource Sharing (CORS)** for multipl
 ✅ https://track-hire.app         - Production frontend (apex domain)
 ```
 
+### **API URLs:**
+
+```
+🏠 Development:  http://localhost:3000
+🚀 Production:   https://api.track-hire.app
+```
+
 ### **CORS Settings:**
 
 - **Credentials:** Enabled (allows cookies)
@@ -132,7 +139,7 @@ Access-Control-Allow-Credentials: true
 
 ```bash
 # Should work ✅
-curl -X GET https://your-api.com/api/auth/me \
+curl -X GET https://api.track-hire.app/api/auth/me \
   -H "Origin: https://www.track-hire.app" \
   -H "Cookie: accessToken=..." \
   -v
