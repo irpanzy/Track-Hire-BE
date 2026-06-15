@@ -2,6 +2,22 @@
 
 RESTful API backend for Track Hire - a job application tracking system built with Node.js, Express, TypeScript, Prisma, Redis, and RabbitMQ.
 
+## 🌐 Live Deployment
+
+**Production URLs:**
+
+- **Frontend:** https://www.track-hire.app
+- **API:** https://api.track-hire.app
+- **API Docs:** https://api.track-hire.app/api-docs
+
+**Development URLs:**
+
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:3000
+- **API Docs:** http://localhost:3000/api-docs
+
+---
+
 ## 🚀 Features
 
 - **User Authentication**
@@ -502,8 +518,9 @@ For more troubleshooting, see [docker-setup.md](./docs/docker-setup.md)
 
 ### Setup & Development
 
-- [docs/development-setup.md](./docs/development-setup.md) - Complete development setup guide
 - [docs/quickstart.md](./docs/quickstart.md) - Quick start guide
+- [docs/development-setup.md](./docs/development-setup.md) - Complete development setup guide
+- [docs/deployment-guide.md](./docs/deployment-guide.md) - 🚀 Production deployment guide
 - [docs/implementation-summary.md](./docs/implementation-summary.md) - Redis & RabbitMQ implementation
 - [docs/final-summary.md](./docs/final-summary.md) - Project summary
 

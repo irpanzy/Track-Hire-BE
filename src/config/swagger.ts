@@ -6,21 +6,29 @@ const swaggerDefinition = {
     title: "Track Hire API",
     version: "1.0.0",
     description:
-      "Track Hire is a job application tracking API. It helps users manage their job applications, track application statuses, set reminders, and organize company information.",
+      "Track Hire is a job application tracking API. It helps users manage their job applications, track application statuses, set reminders, and organize company information.\n\n**Features:**\n- User authentication (email/password + Google OAuth)\n- Job application tracking\n- AI-powered job detail extraction\n- Company management\n- Dashboard analytics\n- Reminders system\n\n**Base URLs:**\n- Production: https://api.track-hire.app\n- Development: http://localhost:3000",
     contact: {
       name: "Track Hire Team",
+      url: "https://www.track-hire.app",
+      email: "support@track-hire.app",
     },
     license: {
       name: "ISC",
+      url: "https://opensource.org/licenses/ISC",
     },
   },
   servers: [
+    {
+      url: "https://api.track-hire.app",
+      description: "Production server",
+    },
     {
       url: "http://localhost:{port}",
       description: "Development server",
       variables: {
         port: {
           default: "3000",
+          description: "Server port (default: 3000)",
         },
       },
     },
