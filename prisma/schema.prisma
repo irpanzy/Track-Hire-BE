@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ApplicationSource {
+  LINKEDIN
+  GLINTS
+  JOBSTREET
+  UPWORK
+  INDEED
+  WEBSITE
+  INSTAGRAM
+  X
+  OTHER
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  TECHNICAL_TEST
+  HR_INTERVIEW
+  OFFERING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+  REMOTE
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  username        String   @unique
+  email           String   @unique
+  password        String?
+  role            UserRole @default(USER)
+  isEmailVerified Boolean  @default(false) @map("is_email_verified")
+  googleId        String?  @unique @map("google_id")
+  avatarUrl       String?  @map("avatar_url")
+  avatarFileId    String?  @map("avatar_file_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  applications       Application[]
+  reminders          Reminder[]
+  verificationTokens VerificationToken[]
+
+  @@map("users")
+  @@index([deletedAt])
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  type      TokenType
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("verification_tokens")
+  @@index([userId])
+  @@index([token])
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  website   String?
+  location  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  applications Application[]
+
+  @@map("companies")
+  @@index([deletedAt])
+}
+
+model Application {
+  id           String            @id @default(cuid())
+  userId       String            @map("user_id")
+  companyId    String            @map("company_id")
+  position     String
+  jobType      JobType           @map("job_type")
+  location     String?
+  source       ApplicationSource
+  sourceUrl    String?           @map("source_url")
+  description  String?
+  requirements String?
+  salaryRange  String?           @map("salary_range")
+  status       ApplicationStatus @default(APPLIED)
+  appliedDate  DateTime          @default(now()) @map("applied_date")
+  deadlineDate DateTime?         @map("deadline_date")
+  notes        String?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  deletedAt    DateTime?         @map("deleted_at")
+
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company    Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  histories  ApplicationHistory[]
+  reminders  Reminder[]
+
+  @@map("job_applications")
+  @@index([userId])
+  @@index([companyId])
+  @@index([status])
+  @@index([source])
+  @@index([jobType])
+  @@index([appliedDate])
+  @@index([deadlineDate])
+  @@index([deletedAt])
+}
+
+model ApplicationHistory {
+  id            String             @id @default(cuid())
+  applicationId String             @map("application_id")
+  oldStatus     ApplicationStatus? @map("old_status")
+  newStatus     ApplicationStatus  @map("new_status")
+  notes         String?
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("application_histories")
+  @@index([applicationId])
+}
+
+model Reminder {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  applicationId String?  @map("application_id")
+  title         String
+  description   String?
+  reminderDate  DateTime @map("reminder_date")
+  isDone        Boolean  @default(false) @map("is_done")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@map("reminders")
+  @@index([userId])
+  @@index([applicationId])
+  @@index([deletedAt])
+}
