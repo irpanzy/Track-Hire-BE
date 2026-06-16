@@ -24,12 +24,14 @@ This guide covers deploying the Track Hire backend API to production at `https:/
 Create `.env` file on production server with production values.
 
 **Copy from template:**
+
 ```bash
 cp .env.example .env
 nano .env  # Edit with production values
 ```
 
 **Important production changes:**
+
 ```env
 NODE_ENV=production
 CLIENT_URL=https://www.track-hire.app

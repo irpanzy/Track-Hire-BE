@@ -330,7 +330,7 @@ const swaggerDefinition = {
       post: {
         summary: "Request password reset",
         description:
-          "Sends a password reset email to the user. For security, always returns a success message regardless of whether the email exists (prevents email enumeration). The reset link expires after 1 hour.",
+          "Sends a password reset email to the user. **Only available for accounts registered manually (email + password). Accounts registered via Google Sign-In will silently receive no email.** For security, always returns a success message regardless of whether the email exists or the account type (prevents email enumeration). The reset link expires after 1 hour.",
         tags: ["Auth"],
         requestBody: {
           required: true,
@@ -343,7 +343,7 @@ const swaggerDefinition = {
         responses: {
           "200": {
             description:
-              "Password reset email sent (or email doesn't exist — same response for security)",
+              "Password reset email sent (or email doesn't exist / is a Google account — same response for security)",
             content: {
               "application/json": {
                 schema: {
@@ -382,7 +382,7 @@ const swaggerDefinition = {
       post: {
         summary: "Reset password",
         description:
-          "Resets the user's password using a valid reset token from the forgot-password email. The token is single-use and expires after 1 hour.",
+          "Resets the user's password using a valid reset token from the forgot-password email. The token is single-use and expires after 1 hour. **Only available for accounts registered manually (email + password). Accounts registered via Google Sign-In cannot reset a password — they must sign in with Google.**",
         tags: ["Auth"],
         requestBody: {
           required: true,
@@ -410,7 +410,7 @@ const swaggerDefinition = {
             },
           },
           "400": {
-            description: "Invalid or expired reset token, or validation error",
+            description: "Invalid or expired reset token, Google account restriction, or validation error",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -418,6 +418,13 @@ const swaggerDefinition = {
                   invalidToken: {
                     summary: "Invalid or expired token",
                     value: { message: "Invalid or expired reset token" },
+                  },
+                  googleAccount: {
+                    summary: "Google account — password reset not available",
+                    value: {
+                      message:
+                        "Password reset is not available for accounts registered via Google. Please sign in with Google.",
+                    },
                   },
                   validationError: {
                     summary: "Password validation failed",

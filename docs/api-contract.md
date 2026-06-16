@@ -301,6 +301,7 @@ This document details the API contracts for the authentication services in the T
 
 - **Endpoint:** `POST /auth/forgot-password`
 - **Auth Required:** None
+- **⚠️ Restriction:** Only available for accounts registered **manually** (email + password). Accounts registered via **Google Sign-In** will silently receive no email.
 - **Request Body Schema (`application/json`):**
   - `email` (string, required): The registered email address to request a reset link.
 
@@ -314,7 +315,7 @@ This document details the API contracts for the authentication services in the T
 
 #### Success Response (`200 OK`):
 
-_Note: Returns 200 OK regardless of email existence to prevent user enumeration._
+_Note: Returns 200 OK regardless of email existence or account type to prevent user enumeration._
 
 ```json
 {
@@ -330,6 +331,7 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
 
 - **Endpoint:** `POST /auth/reset-password`
 - **Auth Required:** None
+- **⚠️ Restriction:** Only available for accounts registered **manually** (email + password). Accounts registered via **Google Sign-In** cannot reset a password — they must sign in with Google.
 - **Request Body Schema (`application/json`):**
   - `token` (string, required): The reset token received in the email.
   - `password` (string, required): New password, min 8 characters, must contain at least one uppercase letter, one lowercase letter, and one number.
@@ -357,6 +359,12 @@ _Note: Returns 200 OK regardless of email existence to prevent user enumeration.
   ```json
   {
     "message": "Invalid or expired reset token"
+  }
+  ```
+- **`400 Bad Request`**: The account was registered via Google and does not support password reset.
+  ```json
+  {
+    "message": "Password reset is not available for accounts registered via Google. Please sign in with Google."
   }
   ```
 
