@@ -39,6 +39,16 @@ This document details the API contracts for the authentication services in the T
 
 ---
 
+## Recycle Bin (Admin Only)
+
+| Method | Endpoint                                               | Auth  | Description             |
+| ------ | ------------------------------------------------------ | ----- | ----------------------- |
+| GET    | [/users/deleted/list](#recycle-list-deleted-users)     | Admin | List deleted users      |
+| POST   | [/users/:id/restore](#recycle-restore-user)            | Admin | Restore deleted user    |
+| DELETE | [/users/:id/permanent](#recycle-permanent-delete-user) | Admin | Permanently delete user |
+
+---
+
 ## Application Management
 
 | Method | Endpoint                                                 | Auth | Description                  |
@@ -1539,3 +1549,176 @@ _Note: Returns the company details along with the user's active (non-deleted) ap
 
 - **`401 Unauthorized`**: Missing or invalid session tokens.
 - **`500 Internal Server Error`**: Unexpected error.
+
+---
+
+## Recycle Bin Endpoints (Admin Only)
+
+<a id="recycle-list-deleted-users"></a>
+
+### 1. List Deleted Users
+
+- **Endpoint:** `GET /users/deleted/list`
+- **Auth Required:** Admin
+- **Query Parameters:**
+  - `page` (integer, optional): Page number, default: 1, min: 1
+  - `limit` (integer, optional): Items per page, default: 10, min: 1, max: 100
+  - `search` (string, optional): Search by name, username, or email
+  - `role` (enum, optional): Filter by role (`USER` or `ADMIN`)
+  - `sortBy` (enum, optional): Sort field (`name`, `username`, `email`, `createdAt`), default: `createdAt`
+  - `order` (enum, optional): Sort order (`asc` or `desc`), default: `desc`
+
+**Request Example:**
+
+```http
+GET /api/users/deleted/list?page=1&limit=10&search=john
+Authorization: Bearer <accessToken>
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "Deleted users fetched successfully",
+  "users": [
+    {
+      "id": "clxyz123",
+      "name": "John Doe",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "role": "USER",
+      "avatarUrl": "https://...",
+      "isEmailVerified": true,
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "deletedAt": "2026-06-14T15:30:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1
+  }
+}
+```
+
+**Error Responses:**
+
+- **400 Bad Request:** Invalid query parameters
+- **401 Unauthorized:** Not logged in
+- **403 Forbidden:** Not admin
+
+---
+
+<a id="recycle-restore-user"></a>
+
+### 2. Restore Deleted User
+
+- **Endpoint:** `POST /users/:id/restore`
+- **Auth Required:** Admin
+- **Path Parameters:**
+  - `id` (string, required): User ID to restore
+
+**Request Example:**
+
+```http
+POST /api/users/clxyz123/restore
+Authorization: Bearer <accessToken>
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "User restored successfully",
+  "user": {
+    "id": "clxyz123",
+    "name": "John Doe",
+    "username": "johndoe",
+    "email": "john@example.com",
+    "role": "USER",
+    "avatarUrl": "https://...",
+    "isEmailVerified": true,
+    "createdAt": "2026-06-01T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+
+- **400 Bad Request:** Invalid user ID
+- **401 Unauthorized:** Not logged in
+- **403 Forbidden:** Not admin
+- **404 Not Found:** Deleted user not found
+- **500 Internal Server Error:** Server error
+
+---
+
+<a id="recycle-permanent-delete-user"></a>
+
+### 3. Permanently Delete User
+
+- **Endpoint:** `DELETE /users/:id/permanent`
+- **Auth Required:** Admin
+- **Path Parameters:**
+  - `id` (string, required): User ID to permanently delete
+
+**⚠️ Warning:** This action cannot be undone! It will permanently delete:
+
+- User account
+- All applications
+- All reminders
+- Application history
+- Verification tokens
+- Avatar from ImageKit
+
+**Note:** Companies are NOT deleted as they may be used by other users.
+
+**Request Example:**
+
+```http
+DELETE /api/users/clxyz123/permanent
+Authorization: Bearer <accessToken>
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "message": "User permanently deleted"
+}
+```
+
+**Error Responses:**
+
+- **400 Bad Request:** Invalid user ID
+- **401 Unauthorized:** Not logged in
+- **403 Forbidden:** Not admin
+- **404 Not Found:** Deleted user not found
+- **500 Internal Server Error:** Failed to delete (transaction error)
+
+---
+
+## Recycle Bin Workflow
+
+```
+Active User
+    │
+    │ DELETE /users/:id (soft delete)
+    ↓
+Deleted User (In Recycle Bin)
+    │
+    ├─→ POST /users/:id/restore → Back to Active User
+    │
+    └─→ DELETE /users/:id/permanent → Permanently Deleted (Cannot restore)
+```
+
+**Best Practices:**
+
+1. **Soft delete first** - Always soft delete users initially
+2. **Keep for 30 days** - Allow restoration within 30-day period
+3. **Confirm before permanent delete** - Show warning dialog
+4. **Audit trail** - Log all recycle bin operations
+5. **Notify users** - Send email when account is deleted/restored
+
+---

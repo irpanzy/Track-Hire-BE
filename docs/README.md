@@ -99,13 +99,14 @@ setup-custom-domain-email.md       - All options
 quick-custom-domain-setup.md       - Quick setup
 ```
 
-### Technical & API (3 files)
+### Technical & API (4 files)
 
 ```
 implementation-summary.md   - Redis & RabbitMQ
 final-summary.md           - Project summary
 api-contract.md            - API specifications
 cors-configuration.md      - ⚡ CORS configuration
+recycle-bin-api.md         - Recycle bin endpoints
 ```
 
 ---
@@ -144,6 +145,9 @@ cors-configuration.md      - ⚡ CORS configuration
 **See API endpoints**
 → Read [api-contract.md](./api-contract.md) or visit https://api.track-hire.app/api-docs
 
+**Manage deleted users (recycle bin)**
+→ Read [recycle-bin-api.md](./recycle-bin-api.md)
+
 **Get project overview**
 → Read [final-summary.md](./final-summary.md)
 
@@ -151,12 +155,12 @@ cors-configuration.md      - ⚡ CORS configuration
 
 ## 📊 Documentation Stats
 
-- **Total Documents**: 18 files
+- **Total Documents**: 19 files
 - **Categories**:
   - Setup & Deployment: 3 files
   - Email: 11 files
   - Technical: 2 files
-  - API & CORS: 2 files
+  - API & CORS: 3 files
 
 ---
 
