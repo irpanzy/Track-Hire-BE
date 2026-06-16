@@ -183,14 +183,17 @@ curl -X GET https://api.track-hire.app/api/auth/me \
 
 ### **Users (`/api/users`)**
 
-| Method | Endpoint       | Description         | Auth Required |
-| ------ | -------------- | ------------------- | ------------- |
-| GET    | `/`            | List all users      | Yes (Admin)   |
-| GET    | `/{id}`        | Get user by ID      | Yes           |
-| PUT    | `/{id}`        | Update user profile | Yes           |
-| DELETE | `/{id}`        | Delete user         | Yes (Admin)   |
-| PUT    | `/{id}/avatar` | Upload avatar       | Yes           |
-| DELETE | `/{id}/avatar` | Delete avatar       | Yes           |
+| Method | Endpoint          | Description               | Auth Required |
+| ------ | ----------------- | ------------------------- | ------------- |
+| GET    | `/`               | List all users            | Yes (Admin)   |
+| GET    | `/{id}`           | Get user by ID            | Yes           |
+| PUT    | `/{id}`           | Update user profile       | Yes           |
+| DELETE | `/{id}`           | Soft-delete user          | Yes (Admin)   |
+| PUT    | `/{id}/avatar`    | Upload avatar             | Yes           |
+| DELETE | `/{id}/avatar`    | Delete avatar             | Yes           |
+| GET    | `/deleted/list`   | List soft-deleted users   | Yes (Admin)   |
+| POST   | `/{id}/restore`   | Restore soft-deleted user | Yes (Admin)   |
+| DELETE | `/{id}/permanent` | Permanently delete user   | Yes (Admin)   |
 
 ### **Applications (`/api/applications`)**
 
@@ -301,6 +304,35 @@ GET /api/users
 
 DELETE /api/users/{id}
 → Soft-deletes user (admin only)
+
+GET /api/users/deleted/list
+→ Lists soft-deleted users (admin only)
+
+POST /api/users/{id}/restore
+→ Restores soft-deleted user (admin only)
+
+DELETE /api/users/{id}/permanent
+→ Permanently deletes user and all data (admin only)
+```
+
+### **6. Test Recycle Bin Workflow**
+
+```
+# 1. Soft-delete a user
+DELETE /api/users/{id}
+→ User marked as deleted (deletedAt set)
+
+# 2. List deleted users
+GET /api/users/deleted/list?page=1&limit=10
+→ Shows all soft-deleted users
+
+# 3. Restore a user
+POST /api/users/{id}/restore
+→ User restored (deletedAt = null)
+
+# 4. Permanent delete (WARNING: Cannot be undone)
+DELETE /api/users/{id}/permanent
+→ User and all related data permanently removed
 ```
 
 ---
@@ -482,6 +514,19 @@ Copy cURL commands for use in scripts or Postman:
 ```
 Click "Execute" → Copy cURL command
 ```
+
+### **6. Test Recycle Bin**
+
+For testing deleted user management:
+
+```
+1. Soft-delete user: DELETE /api/users/{id}
+2. List deleted: GET /api/users/deleted/list
+3. Restore: POST /api/users/{id}/restore
+4. Permanent delete: DELETE /api/users/{id}/permanent (⚠️ Cannot undo)
+```
+
+For detailed recycle bin documentation, see [recycle-bin-api.md](./recycle-bin-api.md)
 
 ---
 
