@@ -26,6 +26,13 @@ RESTful API backend for Track Hire - a job application tracking system built wit
   - JWT-based authentication with refresh tokens
   - Password reset functionality
 
+- **User Management**
+  - User CRUD operations
+  - Avatar upload & management
+  - Soft delete with recycle bin
+  - Restore deleted users
+  - Permanent delete capability
+
 - **Application Management**
   - Create, read, update, delete job applications
   - AI-powered job detail extraction from URLs
@@ -416,6 +423,12 @@ To view the complete schema: `prisma/schema.prisma`
 
 - `GET /api/users` - List all users
 - `DELETE /api/users/:id` - Soft delete user
+
+### Users Recycle Bin (Admin Only)
+
+- `GET /api/users/deleted/list` - List deleted users
+- `POST /api/users/:id/restore` - Restore deleted user
+- `DELETE /api/users/:id/permanent` - Permanently delete user
 
 For detailed API documentation, visit http://localhost:3000/api-docs
 
