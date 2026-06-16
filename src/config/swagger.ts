@@ -410,7 +410,8 @@ const swaggerDefinition = {
             },
           },
           "400": {
-            description: "Invalid or expired reset token, Google account restriction, or validation error",
+            description:
+              "Invalid or expired reset token, Google account restriction, or validation error",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -1064,6 +1065,240 @@ const swaggerDefinition = {
           },
           "404": {
             description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/deleted/list": {
+      get: {
+        tags: ["Users"],
+        summary: "List deleted users (Admin only)",
+        description:
+          "Retrieve a paginated list of soft-deleted users (users with deletedAt not null). Supports search and filtering. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Number of items per page",
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string" },
+            description: "Search by name, username, or email",
+          },
+          {
+            name: "role",
+            in: "query",
+            schema: { type: "string", enum: ["USER", "ADMIN"] },
+            description: "Filter by user role",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Deleted users fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Deleted users fetched successfully",
+                    },
+                    users: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          name: { type: "string" },
+                          username: { type: "string" },
+                          email: { type: "string" },
+                          role: { type: "string", enum: ["USER", "ADMIN"] },
+                          deletedAt: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Timestamp when user was soft-deleted",
+                          },
+                          createdAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/{id}/restore": {
+      post: {
+        tags: ["Users"],
+        summary: "Restore deleted user (Admin only)",
+        description:
+          "Restore a soft-deleted user by setting deletedAt to null. The user will be able to log in again. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID to restore",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User restored successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "User restored successfully",
+                    },
+                    user: { $ref: "#/components/schemas/UserResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "User is not deleted",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User is not deleted" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User not found" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/{id}/permanent": {
+      delete: {
+        tags: ["Users"],
+        summary: "Permanently delete user (Admin only)",
+        description:
+          "⚠️ **WARNING: This action cannot be undone!** Permanently deletes a user and all associated data including applications, reminders, application history, verification tokens, and avatar from ImageKit. Companies are preserved as they may be used by other users. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID to permanently delete",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User permanently deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "User permanently deleted",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User not found" },
+              },
+            },
+          },
+          "500": {
+            description: "Error deleting user or associated resources",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
