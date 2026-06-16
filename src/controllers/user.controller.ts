@@ -339,3 +339,154 @@ export const deleteUser = async (
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const listDeletedUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { page, limit, search, role, sortBy, order } =
+      listUsersQuerySchema.parse(req.query);
+
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {
+      deletedAt: { not: null },
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { username: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (role) {
+      where.role = role;
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          ...USER_SELECT,
+          deletedAt: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: order },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      message: "Deleted users fetched successfully",
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error instanceof Error ? error.message : "Bad request",
+    });
+  }
+};
+
+export const restoreUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid user ID" });
+      return;
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: { id, deletedAt: { not: null } },
+    });
+
+    if (!existingUser) {
+      res.status(404).json({ message: "Deleted user not found" });
+      return;
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { deletedAt: null },
+      select: USER_SELECT,
+    });
+
+    res.status(200).json({
+      message: "User restored successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const permanentDeleteUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid user ID" });
+      return;
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: { id, deletedAt: { not: null } },
+      select: {
+        id: true,
+        avatarFileId: true,
+      },
+    });
+
+    if (!existingUser) {
+      res.status(404).json({ message: "Deleted user not found" });
+      return;
+    }
+
+    if (existingUser.avatarFileId) {
+      try {
+        await deleteImage(existingUser.avatarFileId);
+      } catch (error) {
+        console.error("Failed to delete avatar from ImageKit:", error);
+      }
+    }
+
+    await prisma.$transaction([
+      prisma.verificationToken.deleteMany({ where: { userId: id } }),
+      prisma.reminder.deleteMany({ where: { userId: id } }),
+      prisma.applicationHistory.deleteMany({
+        where: { application: { userId: id } },
+      }),
+      prisma.application.deleteMany({ where: { userId: id } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
+
+    res.status(200).json({
+      message: "User permanently deleted",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to permanently delete user",
+    });
+  }
+};
