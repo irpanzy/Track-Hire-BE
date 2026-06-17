@@ -38,11 +38,17 @@ RESTful API backend for Track Hire - a job application tracking system built wit
   - AI-powered job detail extraction from URLs
   - Application status tracking with history
   - Advanced filtering and pagination
+  - Soft delete with recycle bin
+  - Restore deleted applications
+  - Permanent delete capability
 
 - **Company Management**
   - Auto-create companies from applications
   - Company deduplication
   - Company search and listing
+  - Soft delete with recycle bin
+  - Restore deleted companies
+  - Permanent delete capability
 
 - **Dashboard & Analytics**
   - Application statistics by status
@@ -53,6 +59,9 @@ RESTful API backend for Track Hire - a job application tracking system built wit
 - **Reminders**
   - Set reminders for follow-ups and deadlines
   - Automatic reminder notifications
+  - Soft delete with recycle bin
+  - Restore deleted reminders
+  - Permanent delete capability
 
 - **Redis Caching**
   - Dashboard stats caching (5 min TTL)
@@ -389,8 +398,11 @@ To view the complete schema: `prisma/schema.prisma`
 - `GET /api/applications/:id` - Get application details
 - `POST /api/applications` - Create application
 - `PUT /api/applications/:id` - Update application
-- `DELETE /api/applications/:id` - Delete application
+- `DELETE /api/applications/:id` - Soft-delete application
 - `POST /api/applications/extract-url` - Extract job details from URL (AI)
+- `GET /api/applications/deleted/list` - List deleted applications
+- `POST /api/applications/:id/restore` - Restore deleted application
+- `DELETE /api/applications/:id/permanent` - Permanently delete application
 
 ### Companies
 
@@ -398,7 +410,10 @@ To view the complete schema: `prisma/schema.prisma`
 - `GET /api/companies/:id` - Get company details
 - `POST /api/companies` - Create company
 - `PUT /api/companies/:id` - Update company
-- `DELETE /api/companies/:id` - Delete company
+- `DELETE /api/companies/:id` - Soft-delete company
+- `GET /api/companies/deleted/list` - List deleted companies
+- `POST /api/companies/:id/restore` - Restore deleted company
+- `DELETE /api/companies/:id/permanent` - Permanently delete company
 
 ### Dashboard
 
@@ -410,7 +425,10 @@ To view the complete schema: `prisma/schema.prisma`
 - `GET /api/reminders/:id` - Get reminder details
 - `POST /api/reminders` - Create reminder
 - `PUT /api/reminders/:id` - Update reminder
-- `DELETE /api/reminders/:id` - Delete reminder
+- `DELETE /api/reminders/:id` - Soft-delete reminder
+- `GET /api/reminders/deleted/list` - List deleted reminders
+- `POST /api/reminders/:id/restore` - Restore deleted reminder
+- `DELETE /api/reminders/:id/permanent` - Permanently delete reminder
 
 ### Users
 
@@ -527,33 +545,10 @@ curl http://localhost:3000/api/dashboard/stats \
 
 For more troubleshooting, see [docker-setup.md](./docs/docker-setup.md)
 
-## 📝 Additional Documentation
+## 📝 Documentation
 
-### Setup & Development
-
-- [docs/quickstart.md](./docs/quickstart.md) - Quick start guide
-- [docs/development-setup.md](./docs/development-setup.md) - Complete development setup guide
-- [docs/deployment-guide.md](./docs/deployment-guide.md) - 🚀 Production deployment guide
-- [docs/implementation-summary.md](./docs/implementation-summary.md) - Redis & RabbitMQ implementation
-- [docs/final-summary.md](./docs/final-summary.md) - Project summary
-
-### Email Configuration
-
-- [docs/email-quick-reference.md](./docs/email-quick-reference.md) - ⚡ Quick reference card
-- [docs/gmail-custom-domain-setup.md](./docs/gmail-custom-domain-setup.md) - Gmail SMTP + Cloudflare setup
-- [docs/test-email-setup.md](./docs/test-email-setup.md) - Email testing guide
-- [docs/final-email-setup-summary.md](./docs/final-email-setup-summary.md) - Complete email summary
-- [docs/email-visual-comparison.md](./docs/email-visual-comparison.md) - Email design comparison
-- [docs/email-best-practices.md](./docs/email-best-practices.md) - Email best practices
-- [docs/anti-spam-guide.md](./docs/anti-spam-guide.md) - Anti-spam strategies
-- [docs/for-users-email-whitelist.md](./docs/for-users-email-whitelist.md) - User email whitelist guide
-
-### API & CORS Documentation
-
-- [docs/api-contract.md](./docs/api-contract.md) - API contract specifications
-- [docs/cors-configuration.md](./docs/cors-configuration.md) - ⚡ CORS setup and troubleshooting
-- [docs/setup-custom-domain-email.md](./docs/setup-custom-domain-email.md) - Custom domain email options
-- [docs/quick-custom-domain-setup.md](./docs/quick-custom-domain-setup.md) - Quick domain setup
+- **[docs/api-contract.md](./docs/api-contract.md)** - 📘 Complete API documentation (44 endpoints)
+- **[docs/final-summary.md](./docs/final-summary.md)** - Project overview and summary
 
 ## 🤝 Contributing
 
@@ -569,7 +564,7 @@ This project is licensed under the ISC License.
 
 ## 👥 Authors
 
-- Your Name - Initial work
+- Irfan Muria
 
 ## 🙏 Acknowledgments
 
