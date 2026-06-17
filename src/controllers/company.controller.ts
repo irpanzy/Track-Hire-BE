@@ -269,3 +269,156 @@ export const deleteCompany = async (
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const listDeletedCompanies = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const { page, limit, search, sortBy, order } =
+      listCompaniesQuerySchema.parse(req.query);
+
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, any> = {
+      deletedAt: { not: null },
+    };
+
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+
+    const [companies, total] = await Promise.all([
+      prisma.company.findMany({
+        where,
+        select: {
+          ...COMPANY_SELECT,
+          deletedAt: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { deletedAt: "desc" },
+      }),
+      prisma.company.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      message: "Deleted companies fetched successfully",
+      companies,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error instanceof Error ? error.message : "Bad request",
+    });
+  }
+};
+
+export const restoreCompany = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid company ID" });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const existingCompany = await prisma.company.findUnique({
+      where: { id },
+    });
+
+    if (!existingCompany) {
+      res.status(404).json({ message: "Company not found" });
+      return;
+    }
+
+    if (!existingCompany.deletedAt) {
+      res.status(400).json({ message: "Company is not deleted" });
+      return;
+    }
+
+    const company = await prisma.company.update({
+      where: { id },
+      data: { deletedAt: null },
+      select: COMPANY_SELECT,
+    });
+
+    res.status(200).json({
+      message: "Company restored successfully",
+      company,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const permanentDeleteCompany = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid company ID" });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const existingCompany = await prisma.company.findUnique({
+      where: { id },
+      include: {
+        applications: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!existingCompany) {
+      res.status(404).json({ message: "Company not found" });
+      return;
+    }
+
+    if (existingCompany.applications.length > 0) {
+      res.status(400).json({
+        message:
+          "Cannot permanently delete company with existing applications. Delete or reassign applications first.",
+      });
+      return;
+    }
+
+    await prisma.company.delete({
+      where: { id },
+    });
+
+    res.status(200).json({
+      message: "Company permanently deleted",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
