@@ -328,3 +328,176 @@ export const deleteReminder = async (
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const listDeletedReminders = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const { page, limit, applicationId } = listRemindersQuerySchema.parse(
+      req.query
+    );
+
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, any> = {
+      userId: req.user.id,
+      deletedAt: { not: null },
+    };
+
+    if (applicationId) {
+      where.applicationId = applicationId;
+    }
+
+    const [reminders, total] = await Promise.all([
+      prisma.reminder.findMany({
+        where,
+        include: {
+          application: {
+            select: {
+              id: true,
+              position: true,
+              company: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        skip,
+        take: limit,
+        orderBy: { deletedAt: "desc" },
+      }),
+      prisma.reminder.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      message: "Deleted reminders fetched successfully",
+      reminders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error instanceof Error ? error.message : "Bad request",
+    });
+  }
+};
+
+export const restoreReminder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid reminder ID" });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const existingReminder = await prisma.reminder.findUnique({
+      where: { id },
+    });
+
+    if (!existingReminder) {
+      res.status(404).json({ message: "Reminder not found" });
+      return;
+    }
+
+    if (existingReminder.userId !== req.user.id) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    if (!existingReminder.deletedAt) {
+      res.status(400).json({ message: "Reminder is not deleted" });
+      return;
+    }
+
+    const reminder = await prisma.reminder.update({
+      where: { id },
+      data: { deletedAt: null },
+      include: {
+        application: {
+          select: {
+            id: true,
+            position: true,
+            company: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.status(200).json({
+      message: "Reminder restored successfully",
+      reminder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const permanentDeleteReminder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid reminder ID" });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const existingReminder = await prisma.reminder.findUnique({
+      where: { id },
+    });
+
+    if (!existingReminder) {
+      res.status(404).json({ message: "Reminder not found" });
+      return;
+    }
+
+    if (existingReminder.userId !== req.user.id) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    await prisma.reminder.delete({
+      where: { id },
+    });
+
+    res.status(200).json({
+      message: "Reminder permanently deleted",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
