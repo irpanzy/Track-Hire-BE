@@ -85,21 +85,21 @@ Authorization: Bearer {accessToken}
 
 ### **Reminder Management (8 endpoints)**
 
-| #   | Method | Endpoint                                                             | Auth | Description                 |
-| --- | ------ | -------------------------------------------------------------------- | ---- | --------------------------- |
-| 36  | POST   | [`/api/reminders`](#36-create-reminder)                              | JWT  | Create reminder             |
-| 37  | GET    | [`/api/reminders`](#37-list-reminders)                               | JWT  | List reminders              |
-| 38  | GET    | [`/api/reminders/:id`](#38-get-reminder-by-id)                       | JWT  | Get reminder by ID          |
-| 39  | PUT    | [`/api/reminders/:id`](#39-update-reminder)                          | JWT  | Update reminder             |
-| 40  | DELETE | [`/api/reminders/:id`](#40-soft-delete-reminder)                     | JWT  | Soft-delete reminder        |
-| 41  | GET    | [`/api/reminders/deleted/list`](#41-list-deleted-reminders)          | JWT  | List deleted reminders      |
-| 42  | POST   | [`/api/reminders/:id/restore`](#42-restore-reminder)                 | JWT  | Restore deleted reminder    |
-| 43  | DELETE | [`/api/reminders/:id/permanent`](#43-permanently-delete-reminder)    | JWT  | Permanently delete reminder |
+| #   | Method | Endpoint                                                          | Auth | Description                 |
+| --- | ------ | ----------------------------------------------------------------- | ---- | --------------------------- |
+| 36  | POST   | [`/api/reminders`](#36-create-reminder)                           | JWT  | Create reminder             |
+| 37  | GET    | [`/api/reminders`](#37-list-reminders)                            | JWT  | List reminders              |
+| 38  | GET    | [`/api/reminders/:id`](#38-get-reminder-by-id)                    | JWT  | Get reminder by ID          |
+| 39  | PUT    | [`/api/reminders/:id`](#39-update-reminder)                       | JWT  | Update reminder             |
+| 40  | DELETE | [`/api/reminders/:id`](#40-soft-delete-reminder)                  | JWT  | Soft-delete reminder        |
+| 41  | GET    | [`/api/reminders/deleted/list`](#41-list-deleted-reminders)       | JWT  | List deleted reminders      |
+| 42  | POST   | [`/api/reminders/:id/restore`](#42-restore-reminder)              | JWT  | Restore deleted reminder    |
+| 43  | DELETE | [`/api/reminders/:id/permanent`](#43-permanently-delete-reminder) | JWT  | Permanently delete reminder |
 
 ### **Dashboard (1 endpoint)**
 
-| #   | Method | Endpoint                                             | Auth | Description              |
-| --- | ------ | ---------------------------------------------------- | ---- | ------------------------ |
+| #   | Method | Endpoint                                               | Auth | Description              |
+| --- | ------ | ------------------------------------------------------ | ---- | ------------------------ |
 | 44  | GET    | [`/api/dashboard/stats`](#44-get-dashboard-statistics) | JWT  | Get dashboard statistics |
 
 **Total: 44 endpoints**
