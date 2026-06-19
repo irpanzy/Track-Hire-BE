@@ -107,7 +107,7 @@ RESTful API backend for Track Hire - a job application tracking system built wit
 
 ## 🚀 Quick Start
 
-### Development Mode
+### Option 1: Development Mode (Recommended)
 
 1. **Clone the repository**
 
@@ -129,10 +129,10 @@ cp .env.example .env
 # Edit .env with your credentials
 ```
 
-4. **Start Redis and RabbitMQ (Docker)**
+4. **Start Redis and RabbitMQ**
 
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 5. **Run database migrations**
@@ -153,10 +153,21 @@ npm run prisma:seed
 npm run dev
 ```
 
-Or use the automated script:
+Server will start on http://localhost:3000
+
+### Option 2: Full Docker (Production-like)
+
+1. **Set up environment variables**
 
 ```bash
-start-dev.cmd
+cp .env.docker.example .env.docker
+# Edit .env.docker with your credentials
+```
+
+2. **Build and start all services**
+
+```bash
+docker compose up -d --build
 ```
 
 Server will start on http://localhost:3000
@@ -250,129 +261,98 @@ Untuk dokumentasi lengkap CI/CD, lihat [docs/cicd-guide.md](./docs/cicd-guide.md
 
 ## 🐳 Docker Commands
 
-### Development Mode (Redis & RabbitMQ Only)
+### Development Mode (Only Redis & RabbitMQ)
 
 ```bash
 # Start services
-docker-compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 
 # Stop services
-docker-compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml down
 
 # View logs
-docker-compose -f docker-compose.dev.yml logs -f
-
-# Restart specific service
-docker-compose -f docker-compose.dev.yml restart redis
+docker compose -f docker-compose.dev.yml logs -f
 ```
 
-For detailed setup instructions, see [docs/development-setup.md](./docs/development-setup.md)
+### Production Mode (Full Stack)
+
+```bash
+# Start all services
+docker compose up -d
+
+# Build and start
+docker compose up -d --build
+
+# Stop all services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# Restart specific service
+docker compose restart app
+```
+
+For detailed Docker setup instructions, see [docker-setup.md](./docs/docker-setup.md)
 
 ## 📁 Project Structure
 
 ```
 track-hire-be/
 ├── src/
-│   ├── config/                  # Configuration files
-│   │   ├── env.ts              # Environment variables
-│   │   ├── swagger.ts          # API documentation config
-│   │   └── imagekit.ts         # ImageKit config
-│   │
-│   ├── controllers/            # Request handlers
-│   │   ├── auth.controller.ts
-│   │   ├── user.controller.ts
-│   │   ├── application.controller.ts
-│   │   ├── company.controller.ts
-│   │   ├── dashboard.controller.ts
-│   │   └── reminder.controller.ts
-│   │
-│   ├── middleware/             # Express middleware
-│   │   ├── auth.middleware.ts  # JWT authentication
-│   │   ├── admin.middleware.ts # Admin authorization
-│   │   └── upload.middleware.ts # File upload handling
-│   │
-│   ├── models/                 # TypeScript interfaces
-│   │   ├── auth.model.ts
-│   │   ├── user.model.ts
-│   │   └── application.model.ts
-│   │
-│   ├── routes/                 # API routes
-│   │   ├── auth.routes.ts
-│   │   ├── user.routes.ts
-│   │   ├── application.routes.ts
-│   │   ├── company.routes.ts
-│   │   ├── dashboard.routes.ts
-│   │   └── reminder.routes.ts
-│   │
-│   ├── schemas/                # Zod validation schemas
-│   │   ├── auth.schema.ts
-│   │   ├── user.schema.ts
-│   │   ├── application.schema.ts
-│   │   ├── company.schema.ts
-│   │   └── reminder.schema.ts
-│   │
-│   ├── utils/                  # Utility functions
-│   │   ├── jwt.ts             # JWT token handling
-│   │   ├── email.ts           # Email sending & templates
-│   │   ├── redis.ts           # Redis caching
-│   │   ├── rabbitmq.ts        # RabbitMQ queue
-│   │   ├── token.ts           # Token generation
-│   │   ├── gemini.ts          # AI integration
-│   │   ├── imagekit.ts        # Image upload
-│   │   └── scraper.ts         # Web scraping
-│   │
-│   └── workers/                # Background workers
-│       └── email.worker.ts    # Email queue processor
-│
+│   ├── config/          # Configuration files (env, swagger, imagekit)
+│   ├── controllers/     # Request handlers
+│   ├── middleware/      # Express middleware (auth, upload, admin)
+│   ├── models/          # TypeScript interfaces
+│   ├── routes/          # API routes
+│   ├── schemas/         # Zod validation schemas
+│   ├── utils/           # Utility functions (jwt, email, redis, rabbitmq)
+│   └── workers/         # Background workers (email)
 ├── prisma/
-│   ├── schema.prisma          # Database schema
-│   ├── seed.ts                # Database seeding script
-│   └── migrations/            # Database migrations
-│       ├── migration_lock.toml
-│       └── [timestamp]_[name]/ # Migration files
-│
-├── lib/
-│   └── prisma.ts              # Prisma client instance
-│
-├── generated/                  # Generated Prisma types
-│   └── prisma/
-│       ├── client.ts
-│       ├── models/
-│       └── ...
-│
-├── dist/                       # Compiled JavaScript (production)
-│   └── [build output]
-│
-├── docs/                       # Documentation (15 files)
-│   ├── README.md              # Documentation index
-│   ├── quickstart.md
-│   ├── development-setup.md
-│   ├── email-quick-reference.md
-│   └── ... (see docs/README.md for full list)
-│
-├── node_modules/              # Dependencies (gitignored)
-│
-├── server.ts                  # Application entry point
-├── prisma.config.ts           # Prisma generator config
-├── tsconfig.json              # TypeScript configuration
-├── package.json               # Dependencies & scripts
-├── package-lock.json          # Dependency lock file
-│
-├── docker-compose.dev.yml     # Development services (Redis, RabbitMQ)
-├── start-dev.cmd              # Development startup script
-├── stop-dev.cmd               # Development shutdown script
-│
-├── .env                       # Environment variables (gitignored)
-├── .gitignore                 # Git ignore rules
-├── .prettierrc                # Prettier config
-├── .prettierignore            # Prettier ignore rules
-│
-└── README.md                  # This file
+│   ├── schema.prisma    # Database schema
+│   ├── seed.ts          # Database seeding script
+│   └── migrations/      # Database migrations
+├── lib/                 # Prisma client instance
+├── generated/           # Generated Prisma types
+├── dist/                # Compiled JavaScript (production)
+├── docs/                # API documentation
+├── server.ts            # Application entry point
+├── Dockerfile           # Docker image definition
+├── docker-compose.yml   # Production Docker setup
+├── docker-compose.dev.yml # Development Docker setup
+└── .env                 # Environment variables (not in git)
 ```
 
 ## 🔐 Environment Variables
 
-The project uses `.env` file for environment configuration:
+The project uses different environment files for different deployment modes:
+
+### Development Mode (`.env`)
+
+Used when running the app locally with `npm run dev`:
+
+```env
+# Uses localhost because services are in Docker, app is on host
+REDIS_URL=redis://localhost:6379
+RABBITMQ_URL=amqp://localhost:5672
+```
+
+### Production Mode (`.env.docker`)
+
+Used when running with `docker compose up` (full containerization):
+
+```env
+# These values are overridden by docker-compose.yml to use Docker networking
+REDIS_URL=redis://localhost:6379  # Becomes redis://redis:6379
+RABBITMQ_URL=amqp://localhost:5672  # Becomes amqp://rabbitmq:5672
+```
+
+### Template Files
+
+- **`.env.example`** - Template for development mode
+- **`.env.docker.example`** - Template for production Docker mode
+
+Required environment variables (see template files for full list):
 
 ```env
 # Database
@@ -390,13 +370,11 @@ JWT_REFRESH_SECRET=your-refresh-secret
 # OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 
-# Email (SMTP) - Gmail with Custom Domain
+# Email (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
-SMTP_FROM_NAME=Track Hire
-SUPPORT_EMAIL=support@track-hire.app
 
 # ImageKit
 IMAGEKIT_PRIVATE_KEY=your-imagekit-key
@@ -404,37 +382,10 @@ IMAGEKIT_PRIVATE_KEY=your-imagekit-key
 # Gemini AI
 GEMINI_API_KEY=your-gemini-api-key
 
-# Redis & RabbitMQ (Docker services)
+# Redis & RabbitMQ
 REDIS_URL=redis://localhost:6379
 RABBITMQ_URL=amqp://localhost:5672
 ```
-
-See `.env.example` for complete configuration template.
-
-### 📧 Email Configuration
-
-The application uses **Gmail SMTP + Cloudflare Email Routing** for professional email delivery:
-
-**Sending emails:**
-
-- Uses Gmail SMTP for reliable delivery
-- Professional sender name: "Track Hire"
-- Custom domain for replies: `support@track-hire.app`
-
-**Receiving replies:**
-
-- Cloudflare Email Routing forwards to your Gmail
-- Single inbox management
-
-**Features:**
-
-- ✅ Beautiful HTML email templates with responsive design
-- ✅ Professional purple gradient branding
-- ✅ Mobile-friendly layouts
-- ✅ High deliverability (8-10/10 spam score)
-- ✅ Zero additional cost
-
-For complete email setup guide, see [docs/email-quick-reference.md](./docs/email-quick-reference.md)
 
 ## 📊 Database Schema
 
@@ -657,40 +608,14 @@ curl http://localhost:3000/api/dashboard/stats \
 - Check email worker logs: `docker compose logs -f app`
 - Verify RabbitMQ queue: http://localhost:15672
 
-For more troubleshooting, see [docs/development-setup.md](./docs/development-setup.md)
+For more troubleshooting, see [docker-setup.md](./docs/docker-setup.md)
 
 ## 📝 Documentation
 
-<<<<<<< HEAD
-### Setup & Development
-
-- [docs/development-setup.md](./docs/development-setup.md) - Complete development setup guide
-- [docs/quickstart.md](./docs/quickstart.md) - Quick start guide
-- [docs/implementation-summary.md](./docs/implementation-summary.md) - Redis & RabbitMQ implementation
-- [docs/final-summary.md](./docs/final-summary.md) - Project summary
-
-### Email Configuration
-
-- [docs/email-quick-reference.md](./docs/email-quick-reference.md) - ⚡ Quick reference card
-- [docs/gmail-custom-domain-setup.md](./docs/gmail-custom-domain-setup.md) - Gmail SMTP + Cloudflare setup
-- [docs/test-email-setup.md](./docs/test-email-setup.md) - Email testing guide
-- [docs/final-email-setup-summary.md](./docs/final-email-setup-summary.md) - Complete email summary
-- [docs/email-visual-comparison.md](./docs/email-visual-comparison.md) - Email design comparison
-- [docs/email-best-practices.md](./docs/email-best-practices.md) - Email best practices
-- [docs/anti-spam-guide.md](./docs/anti-spam-guide.md) - Anti-spam strategies
-- [docs/for-users-email-whitelist.md](./docs/for-users-email-whitelist.md) - User email whitelist guide
-
-### API Documentation
-
-- [docs/api-contract.md](./docs/api-contract.md) - API contract specifications
-- [docs/setup-custom-domain-email.md](./docs/setup-custom-domain-email.md) - Custom domain email options
-- [docs/quick-custom-domain-setup.md](./docs/quick-custom-domain-setup.md) - Quick domain setup
-=======
 - **[docs/api-contract.md](./docs/api-contract.md)** - 📘 Complete API documentation (44 endpoints)
 - **[docs/final-summary.md](./docs/final-summary.md)** - Project overview and summary
 - **[docs/scripts-reference.md](./docs/scripts-reference.md)** - 📜 NPM scripts documentation
 - **[docs/cicd-guide.md](./docs/cicd-guide.md)** - 🚀 CI/CD workflows documentation
->>>>>>> ee10cb0ede7f12049247c40213c7fb6903524b13
 
 ## 🤝 Contributing
 

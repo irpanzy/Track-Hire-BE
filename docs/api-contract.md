@@ -452,8 +452,14 @@ Authorization: Bearer {accessToken}
 **Request Body:**
 
 ```
-avatar: File (JPEG, PNG, WebP, GIF, max: 2MB)
+avatar: File (JPEG, PNG, WebP, GIF, max: 10MB)
 ```
+
+**Processing:**
+
+- Images are automatically resized to 1024x1024 pixels
+- Converted to WebP format @ 95% quality
+- Final file size typically 50-150 KB after compression
 
 **Success Response (200):**
 
@@ -1723,7 +1729,7 @@ async function fetchWithAuth(url, options = {}) {
 - **Soft Delete:** All entities support soft delete with recycle bin
 - **Rate Limiting:** 10 AI extractions per hour per user
 - **Caching:** Dashboard stats cached for 5 minutes
-- **File Upload:** Max 2MB, images only (JPEG, PNG, WebP, GIF)
+- **File Upload:** Max 10MB, images only (JPEG, PNG, WebP, GIF), auto-resized to 1024x1024 @ 95% quality
 - **Pagination:** Default 10 items, max 100 per page
 
 ---
