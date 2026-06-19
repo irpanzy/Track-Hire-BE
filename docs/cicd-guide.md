@@ -42,6 +42,12 @@ Automated checks untuk setiap Pull Request.
 
 - Pull request opened, synchronized, atau reopened
 
+**Permissions:**
+
+- `contents: read` - Read repository contents
+- `pull-requests: write` - Comment on PRs
+- `issues: write` - Comment on issues/PRs
+
 **Jobs:**
 
 1. **Validate PR** - Validasi format PR title (semantic versioning)
@@ -52,17 +58,35 @@ Automated checks untuk setiap Pull Request.
 
 **PR Title Format:**
 
+PR title HARUS mengikuti format Conventional Commits:
+
 ```
 <type>: <description>
 
-Types: feat, fix, docs, style, refactor, perf, test, chore
+Required types:
+- feat: New feature
+- fix: Bug fix
+- docs: Documentation changes
+- style: Code style changes (formatting, etc)
+- refactor: Code refactoring
+- perf: Performance improvements
+- test: Adding or updating tests
+- chore: Maintenance tasks
 ```
 
-**Examples:**
+**✅ Valid Examples:**
 
 - `feat: add recycle bin endpoints`
 - `fix: resolve avatar upload issue`
 - `docs: update API documentation`
+- `chore: update dependencies`
+- `refactor: improve error handling`
+
+**❌ Invalid Examples:**
+
+- `Redis rabbitmq docker` (missing type prefix)
+- `Add feature` (missing type prefix)
+- `update: docs` (invalid type, use "docs:")
 
 ---
 
