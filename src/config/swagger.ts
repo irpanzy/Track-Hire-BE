@@ -6,21 +6,29 @@ const swaggerDefinition = {
     title: "Track Hire API",
     version: "1.0.0",
     description:
-      "Track Hire is a job application tracking API. It helps users manage their job applications, track application statuses, set reminders, and organize company information.",
+      "Track Hire is a job application tracking API. It helps users manage their job applications, track application statuses, set reminders, and organize company information.\n\n**Features:**\n- User authentication (email/password + Google OAuth)\n- Job application tracking\n- AI-powered job detail extraction\n- Company management\n- Dashboard analytics\n- Reminders system\n\n**Base URLs:**\n- Production: https://api.track-hire.app\n- Development: http://localhost:3000",
     contact: {
       name: "Track Hire Team",
+      url: "https://www.track-hire.app",
+      email: "support@track-hire.app",
     },
     license: {
       name: "ISC",
+      url: "https://opensource.org/licenses/ISC",
     },
   },
   servers: [
+    {
+      url: "https://api.track-hire.app",
+      description: "Production server",
+    },
     {
       url: "http://localhost:{port}",
       description: "Development server",
       variables: {
         port: {
           default: "3000",
+          description: "Server port (default: 3000)",
         },
       },
     },
@@ -322,7 +330,7 @@ const swaggerDefinition = {
       post: {
         summary: "Request password reset",
         description:
-          "Sends a password reset email to the user. For security, always returns a success message regardless of whether the email exists (prevents email enumeration). The reset link expires after 1 hour.",
+          "Sends a password reset email to the user. **Only available for accounts registered manually (email + password). Accounts registered via Google Sign-In will silently receive no email.** For security, always returns a success message regardless of whether the email exists or the account type (prevents email enumeration). The reset link expires after 1 hour.",
         tags: ["Auth"],
         requestBody: {
           required: true,
@@ -335,7 +343,7 @@ const swaggerDefinition = {
         responses: {
           "200": {
             description:
-              "Password reset email sent (or email doesn't exist — same response for security)",
+              "Password reset email sent (or email doesn't exist / is a Google account — same response for security)",
             content: {
               "application/json": {
                 schema: {
@@ -374,7 +382,7 @@ const swaggerDefinition = {
       post: {
         summary: "Reset password",
         description:
-          "Resets the user's password using a valid reset token from the forgot-password email. The token is single-use and expires after 1 hour.",
+          "Resets the user's password using a valid reset token from the forgot-password email. The token is single-use and expires after 1 hour. **Only available for accounts registered manually (email + password). Accounts registered via Google Sign-In cannot reset a password — they must sign in with Google.**",
         tags: ["Auth"],
         requestBody: {
           required: true,
@@ -402,7 +410,8 @@ const swaggerDefinition = {
             },
           },
           "400": {
-            description: "Invalid or expired reset token, or validation error",
+            description:
+              "Invalid or expired reset token, Google account restriction, or validation error",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -410,6 +419,13 @@ const swaggerDefinition = {
                   invalidToken: {
                     summary: "Invalid or expired token",
                     value: { message: "Invalid or expired reset token" },
+                  },
+                  googleAccount: {
+                    summary: "Google account — password reset not available",
+                    value: {
+                      message:
+                        "Password reset is not available for accounts registered via Google. Please sign in with Google.",
+                    },
                   },
                   validationError: {
                     summary: "Password validation failed",
@@ -913,7 +929,7 @@ const swaggerDefinition = {
         tags: ["Users"],
         summary: "Upload or update avatar",
         description:
-          "Upload a new avatar image. The image is resized to 200x200px WebP format and stored on ImageKit. Maximum file size: 2MB. Accepted formats: JPEG, PNG, WebP, GIF.",
+          "Upload a new avatar image. The image is resized to 1024x1024px WebP format and stored on ImageKit. Maximum file size: 2MB. Accepted formats: JPEG, PNG, WebP, GIF.",
         security: [{ cookieAccessToken: [] }],
         parameters: [
           {
@@ -1049,6 +1065,240 @@ const swaggerDefinition = {
           },
           "404": {
             description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/deleted/list": {
+      get: {
+        tags: ["Users"],
+        summary: "List deleted users (Admin only)",
+        description:
+          "Retrieve a paginated list of soft-deleted users (users with deletedAt not null). Supports search and filtering. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Number of items per page",
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string" },
+            description: "Search by name, username, or email",
+          },
+          {
+            name: "role",
+            in: "query",
+            schema: { type: "string", enum: ["USER", "ADMIN"] },
+            description: "Filter by user role",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Deleted users fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Deleted users fetched successfully",
+                    },
+                    users: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          name: { type: "string" },
+                          username: { type: "string" },
+                          email: { type: "string" },
+                          role: { type: "string", enum: ["USER", "ADMIN"] },
+                          deletedAt: {
+                            type: "string",
+                            format: "date-time",
+                            description: "Timestamp when user was soft-deleted",
+                          },
+                          createdAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/{id}/restore": {
+      post: {
+        tags: ["Users"],
+        summary: "Restore deleted user (Admin only)",
+        description:
+          "Restore a soft-deleted user by setting deletedAt to null. The user will be able to log in again. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID to restore",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User restored successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "User restored successfully",
+                    },
+                    user: { $ref: "#/components/schemas/UserResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "User is not deleted",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User is not deleted" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User not found" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/users/{id}/permanent": {
+      delete: {
+        tags: ["Users"],
+        summary: "Permanently delete user (Admin only)",
+        description:
+          "⚠️ **WARNING: This action cannot be undone!** Permanently deletes a user and all associated data including applications, reminders, application history, verification tokens, and avatar from ImageKit. Companies are preserved as they may be used by other users. Requires admin role.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "User ID to permanently delete",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User permanently deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "User permanently deleted",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — admin access required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Forbidden. Admin access required." },
+              },
+            },
+          },
+          "404": {
+            description: "User not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "User not found" },
+              },
+            },
+          },
+          "500": {
+            description: "Error deleting user or associated resources",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -1520,6 +1770,230 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/applications/deleted/list": {
+      get: {
+        tags: ["Applications"],
+        summary: "List deleted applications",
+        description:
+          "Retrieve a paginated list of soft-deleted applications (deletedAt not null). Supports search and filtering. Owner or admin access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Number of items per page",
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string" },
+            description: "Search by position or company name",
+          },
+          {
+            name: "status",
+            in: "query",
+            schema: { $ref: "#/components/schemas/ApplicationStatus" },
+            description: "Filter by status",
+          },
+          {
+            name: "source",
+            in: "query",
+            schema: { $ref: "#/components/schemas/ApplicationSource" },
+            description: "Filter by source",
+          },
+          {
+            name: "jobType",
+            in: "query",
+            schema: { $ref: "#/components/schemas/JobType" },
+            description: "Filter by job type",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Deleted applications fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Deleted applications fetched successfully",
+                    },
+                    applications: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/ApplicationResponse",
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/applications/{id}/restore": {
+      post: {
+        tags: ["Applications"],
+        summary: "Restore deleted application",
+        description:
+          "Restore a soft-deleted application by setting deletedAt to null. Owner or admin access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Application ID to restore",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Application restored successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Application restored successfully",
+                    },
+                    application: {
+                      $ref: "#/components/schemas/ApplicationResponse",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Application is not deleted",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Application is not deleted" },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — not the owner",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Application not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Application not found" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/applications/{id}/permanent": {
+      delete: {
+        tags: ["Applications"],
+        summary: "Permanently delete application",
+        description:
+          "⚠️ **WARNING: This action cannot be undone!** Permanently deletes an application and all associated data including history. Reminders linked to this application will be unlinked. Owner or admin access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Application ID to permanently delete",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Application permanently deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Application permanently deleted",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Forbidden — not the owner",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "404": {
+            description: "Application not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: { message: "Application not found" },
+              },
+            },
+          },
+          "500": {
+            description: "Error deleting application or associated resources",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
     "/api/companies": {
       post: {
         tags: ["Companies"],
@@ -1743,6 +2217,163 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/companies/deleted/list": {
+      get: {
+        tags: ["Companies"],
+        summary: "List deleted companies",
+        description:
+          "Retrieve a paginated list of soft-deleted companies (deletedAt not null). Supports search and filtering.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Number of items per page",
+          },
+          {
+            name: "search",
+            in: "query",
+            schema: { type: "string" },
+            description: "Search by company name",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Deleted companies fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Deleted companies fetched successfully",
+                    },
+                    companies: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Company" },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
+    "/api/companies/{id}/restore": {
+      post: {
+        tags: ["Companies"],
+        summary: "Restore deleted company",
+        description:
+          "Restore a soft-deleted company by setting deletedAt to null.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Company ID to restore",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Company restored successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Company restored successfully",
+                    },
+                    company: { $ref: "#/components/schemas/Company" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Company is not deleted",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Company not found",
+          },
+        },
+      },
+    },
+    "/api/companies/{id}/permanent": {
+      delete: {
+        tags: ["Companies"],
+        summary: "Permanently delete company",
+        description:
+          "⚠️ **WARNING: This action cannot be undone!** Permanently deletes a company. **Restriction:** Cannot delete if company has existing applications.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Company ID to permanently delete",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Company permanently deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Company permanently deleted",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Cannot delete company with existing applications",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: {
+                  message:
+                    "Cannot permanently delete company with existing applications. Delete or reassign applications first.",
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Company not found",
+          },
+        },
+      },
+    },
     "/api/reminders": {
       post: {
         tags: ["Reminders"],
@@ -1955,6 +2586,157 @@ const swaggerDefinition = {
           },
           "401": {
             description: "Unauthorized",
+          },
+          "404": {
+            description: "Reminder not found",
+          },
+        },
+      },
+    },
+    "/api/reminders/deleted/list": {
+      get: {
+        tags: ["Reminders"],
+        summary: "List deleted reminders",
+        description:
+          "Retrieve a paginated list of soft-deleted reminders (deletedAt not null). Owner access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 10, minimum: 1, maximum: 100 },
+            description: "Number of items per page",
+          },
+          {
+            name: "applicationId",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by application ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Deleted reminders fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Deleted reminders fetched successfully",
+                    },
+                    reminders: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Reminder" },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
+    "/api/reminders/{id}/restore": {
+      post: {
+        tags: ["Reminders"],
+        summary: "Restore deleted reminder",
+        description:
+          "Restore a soft-deleted reminder by setting deletedAt to null. Owner access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Reminder ID to restore",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reminder restored successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Reminder restored successfully",
+                    },
+                    reminder: { $ref: "#/components/schemas/Reminder" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Reminder is not deleted",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "403": {
+            description: "Forbidden — not the owner",
+          },
+          "404": {
+            description: "Reminder not found",
+          },
+        },
+      },
+    },
+    "/api/reminders/{id}/permanent": {
+      delete: {
+        tags: ["Reminders"],
+        summary: "Permanently delete reminder",
+        description:
+          "⚠️ **WARNING: This action cannot be undone!** Permanently deletes a reminder. Owner access required.",
+        security: [{ cookieAccessToken: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Reminder ID to permanently delete",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reminder permanently deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Reminder permanently deleted",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "403": {
+            description: "Forbidden — not the owner",
           },
           "404": {
             description: "Reminder not found",

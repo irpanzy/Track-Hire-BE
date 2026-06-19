@@ -502,3 +502,188 @@ export const extractApplicationFromUrl = async (
     });
   }
 };
+
+export const listDeletedApplications = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const { page, limit, search, status, source, jobType } =
+      listApplicationsQuerySchema.parse(req.query);
+
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {
+      deletedAt: { not: null },
+      userId: req.user.id,
+    };
+
+    if (search) {
+      where.OR = [
+        { position: { contains: search, mode: "insensitive" } },
+        {
+          company: {
+            name: { contains: search, mode: "insensitive" },
+          },
+        },
+      ];
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (source) {
+      where.source = source;
+    }
+
+    if (jobType) {
+      where.jobType = jobType;
+    }
+
+    const [applications, total] = await Promise.all([
+      prisma.application.findMany({
+        where,
+        select: {
+          ...APPLICATION_SELECT,
+          deletedAt: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { deletedAt: "desc" },
+      }),
+      prisma.application.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      message: "Deleted applications fetched successfully",
+      applications,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error instanceof Error ? error.message : "Bad request",
+    });
+  }
+};
+
+export const restoreApplication = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid application ID" });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const existingApplication = await prisma.application.findUnique({
+      where: { id },
+    });
+
+    if (!existingApplication) {
+      res.status(404).json({ message: "Application not found" });
+      return;
+    }
+
+    if (existingApplication.userId !== req.user.id) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    if (!existingApplication.deletedAt) {
+      res.status(400).json({ message: "Application is not deleted" });
+      return;
+    }
+
+    const application = await prisma.application.update({
+      where: { id },
+      data: { deletedAt: null },
+      select: APPLICATION_SELECT,
+    });
+
+    await deleteCache(`dashboard:stats:${req.user.id}`);
+
+    res.status(200).json({
+      message: "Application restored successfully",
+      application,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const permanentDeleteApplication = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = getParamId(req);
+
+    if (!id) {
+      res.status(400).json({ message: "Invalid application ID" });
+      return;
+    }
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const existingApplication = await prisma.application.findUnique({
+      where: { id },
+    });
+
+    if (!existingApplication) {
+      res.status(404).json({ message: "Application not found" });
+      return;
+    }
+
+    if (existingApplication.userId !== req.user.id) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.applicationHistory.deleteMany({
+        where: { applicationId: id },
+      });
+
+      await tx.reminder.updateMany({
+        where: { applicationId: id },
+        data: { applicationId: null },
+      });
+
+      await tx.application.delete({
+        where: { id },
+      });
+    });
+
+    await deleteCache(`dashboard:stats:${req.user.id}`);
+
+    res.status(200).json({
+      message: "Application permanently deleted",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

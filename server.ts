@@ -24,6 +24,7 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
+<<<<<<< HEAD
       if (env.NODE_ENV === "development") {
         const isLocalhost =
           origin.includes("localhost") || origin.includes("127.0.0.1");
@@ -34,14 +35,25 @@ app.use(
         callback(null, true);
       } else {
         console.warn(`CORS blocked origin: ${origin}`);
+=======
+      if (env.ALLOWED_ORIGINS.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`⚠️  Blocked CORS request from origin: ${origin}`);
+>>>>>>> ee10cb0ede7f12049247c40213c7fb6903524b13
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
+<<<<<<< HEAD
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     exposedHeaders: ["Set-Cookie"],
     maxAge: 86400,
+=======
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+>>>>>>> ee10cb0ede7f12049247c40213c7fb6903524b13
   })
 );
 app.use(express.json());

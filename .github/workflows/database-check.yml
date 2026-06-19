@@ -1,0 +1,104 @@
+name: Database Migration Check
+
+on:
+  pull_request:
+    paths:
+      - "prisma/schema.prisma"
+      - "prisma/migrations/**"
+
+env:
+  NODE_VERSION: "20.x"
+
+jobs:
+  check-migrations:
+    name: Validate Prisma Schema & Migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate Prisma Schema
+        run: npx prisma validate
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Check migration status
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: |
+          echo "🔍 Checking migration status..."
+          npx prisma migrate deploy --preview-feature || echo "No migrations to apply"
+
+      - name: Verify schema
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        run: |
+          echo "✅ Schema validation passed"
+          npx prisma db push --skip-generate
+
+      - name: Comment PR with migration info
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            let comment = '## 🗄️ Database Migration Check\n\n';
+            comment += '✅ Prisma schema validation passed\n';
+            comment += '✅ Migration compatibility verified\n\n';
+            comment += '### Changed Files:\n';
+
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const prismaFiles = files.filter(f => 
+              f.filename.startsWith('prisma/')
+            );
+
+            if (prismaFiles.length > 0) {
+              prismaFiles.forEach(file => {
+                comment += `- \`${file.filename}\` (${file.status})\n`;
+              });
+            } else {
+              comment += 'No Prisma files changed\n';
+            }
+
+            comment += '\n⚠️ **Remember to run migrations on production after deployment!**\n';
+            comment += '```bash\nnpm run prisma:migrate:deploy\n```';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

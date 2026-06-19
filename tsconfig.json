@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
     "module": "CommonJS",
+<<<<<<< HEAD
+=======
+    "moduleResolution": "bundler",
+>>>>>>> ee10cb0ede7f12049247c40213c7fb6903524b13
     "target": "ES2023",
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -11,5 +15,5 @@
     "allowSyntheticDefaultImports": true
   },
   "include": ["server.ts", "src/**/*", "lib/**/*", "prisma.config.ts"],
-  "exclude": ["node_modules", "dist", "prisma/migrations"]
+  "exclude": ["node_modules", "dist", "prisma/migrations", "**/*.test.ts"]
 }

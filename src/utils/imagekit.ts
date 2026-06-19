@@ -2,9 +2,9 @@ import sharp from "sharp";
 import { toFile } from "@imagekit/nodejs";
 import { imagekit } from "../config/imagekit";
 
-const AVATAR_WIDTH = 200;
-const AVATAR_HEIGHT = 200;
-const AVATAR_QUALITY = 80;
+const AVATAR_WIDTH = 1024;
+const AVATAR_HEIGHT = 1024;
+const AVATAR_QUALITY = 95;
 const AVATAR_FOLDER = "/avatars";
 
 export interface AvatarUploadResult {

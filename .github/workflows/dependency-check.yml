@@ -1,0 +1,115 @@
+name: Dependency Check
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  NODE_VERSION: "20.x"
+
+jobs:
+  check-dependencies:
+    name: Check for Dependency Updates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Check for outdated packages
+        id: outdated
+        run: |
+          echo "## 📦 Outdated Packages" > outdated.md
+          npm outdated --json > outdated.json || true
+
+          if [ -s outdated.json ]; then
+            echo "HAS_OUTDATED=true" >> $GITHUB_OUTPUT
+            echo "" >> outdated.md
+            echo "The following packages have updates available:" >> outdated.md
+            echo "" >> outdated.md
+            echo "\`\`\`" >> outdated.md
+            npm outdated >> outdated.md || true
+            echo "\`\`\`" >> outdated.md
+          else
+            echo "HAS_OUTDATED=false" >> $GITHUB_OUTPUT
+            echo "" >> outdated.md
+            echo "✅ All packages are up to date!" >> outdated.md
+          fi
+
+      - name: Check for security vulnerabilities
+        id: audit
+        run: |
+          echo "## 🔒 Security Audit" > audit.md
+          npm audit --json > audit.json || true
+
+          if grep -q '"vulnerabilities"' audit.json; then
+            echo "HAS_VULNERABILITIES=true" >> $GITHUB_OUTPUT
+            echo "" >> audit.md
+            echo "\`\`\`" >> audit.md
+            npm audit >> audit.md || true
+            echo "\`\`\`" >> audit.md
+            echo "" >> audit.md
+            echo "⚠️ Run \`npm audit fix\` to fix vulnerabilities" >> audit.md
+          else
+            echo "HAS_VULNERABILITIES=false" >> $GITHUB_OUTPUT
+            echo "" >> audit.md
+            echo "✅ No known security vulnerabilities!" >> audit.md
+          fi
+
+      - name: Create issue if updates available
+        if: steps.outdated.outputs.HAS_OUTDATED == 'true' || steps.audit.outputs.HAS_VULNERABILITIES == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const outdated = fs.readFileSync('outdated.md', 'utf8');
+            const audit = fs.readFileSync('audit.md', 'utf8');
+
+            const body = `# 🔄 Weekly Dependency Check\n\n${outdated}\n\n${audit}\n\n---\n*This issue was automatically created by GitHub Actions*`;
+
+            // Check if there's already an open issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'dependencies'
+            });
+
+            const existingIssue = issues.find(issue => 
+              issue.title === '🔄 Weekly Dependency Update Check'
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔄 Weekly Dependency Update Check',
+                body: body,
+                labels: ['dependencies', 'maintenance']
+              });
+            }
+
+      - name: Summary
+        run: |
+          echo "### Dependency Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat outdated.md >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat audit.md >> $GITHUB_STEP_SUMMARY

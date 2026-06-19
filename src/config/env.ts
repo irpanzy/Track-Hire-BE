@@ -15,6 +15,10 @@ export const env = {
     "development",
   CLIENT_URL: requireEnv("CLIENT_URL"),
 
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((url) => url.trim())
+    : [requireEnv("CLIENT_URL")],
+
   DATABASE_URL: requireEnv("DATABASE_URL"),
 
   ADMIN_USERNAME: requireEnv("ADMIN_USERNAME"),

@@ -1,6 +1,26 @@
 # Track Hire Backend
 
+[![CI/CD Pipeline](https://github.com/USERNAME/track-hire-be/actions/workflows/deploy.yml/badge.svg)](https://github.com/USERNAME/track-hire-be/actions/workflows/deploy.yml)
+[![PR Checks](https://github.com/USERNAME/track-hire-be/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/USERNAME/track-hire-be/actions/workflows/pr-checks.yml)
+[![Staging Deploy](https://github.com/USERNAME/track-hire-be/actions/workflows/staging-deploy.yml/badge.svg)](https://github.com/USERNAME/track-hire-be/actions/workflows/staging-deploy.yml)
+
 RESTful API backend for Track Hire - a job application tracking system built with Node.js, Express, TypeScript, Prisma, Redis, and RabbitMQ.
+
+## 🌐 Live Deployment
+
+**Production URLs:**
+
+- **Frontend:** https://www.track-hire.app
+- **API:** https://api.track-hire.app
+- **API Docs:** https://api.track-hire.app/api-docs
+
+**Development URLs:**
+
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:3000
+- **API Docs:** http://localhost:3000/api-docs
+
+---
 
 ## 🚀 Features
 
@@ -10,16 +30,29 @@ RESTful API backend for Track Hire - a job application tracking system built wit
   - JWT-based authentication with refresh tokens
   - Password reset functionality
 
+- **User Management**
+  - User CRUD operations
+  - Avatar upload & management
+  - Soft delete with recycle bin
+  - Restore deleted users
+  - Permanent delete capability
+
 - **Application Management**
   - Create, read, update, delete job applications
   - AI-powered job detail extraction from URLs
   - Application status tracking with history
   - Advanced filtering and pagination
+  - Soft delete with recycle bin
+  - Restore deleted applications
+  - Permanent delete capability
 
 - **Company Management**
   - Auto-create companies from applications
   - Company deduplication
   - Company search and listing
+  - Soft delete with recycle bin
+  - Restore deleted companies
+  - Permanent delete capability
 
 - **Dashboard & Analytics**
   - Application statistics by status
@@ -30,6 +63,9 @@ RESTful API backend for Track Hire - a job application tracking system built wit
 - **Reminders**
   - Set reminders for follow-ups and deadlines
   - Automatic reminder notifications
+  - Soft delete with recycle bin
+  - Restore deleted reminders
+  - Permanent delete capability
 
 - **Redis Caching**
   - Dashboard stats caching (5 min TTL)
@@ -133,6 +169,8 @@ Once the server is running, access the interactive API documentation at:
 
 ## 🔧 Available Scripts
 
+For complete script documentation, see [docs/scripts-reference.md](./docs/scripts-reference.md)
+
 ```bash
 # Development
 npm run dev              # Start development server with hot-reload
@@ -143,13 +181,72 @@ npm start                # Start production server (requires build)
 
 # Code Quality
 npm run format           # Format code with Prettier
-npm run noemit           # Type-check without emitting files
+npm run format:check     # Check code formatting
+npm run type-check       # Type-check without emitting files
 
 # Database
 npm run prisma:migrate   # Run database migrations
 npm run prisma:generate  # Generate Prisma Client
 npm run prisma:seed      # Seed database with initial data
+npm run prisma:studio    # Open Prisma Studio GUI
+
+# Docker
+npm run docker:dev:up    # Start dev services (Redis, RabbitMQ)
+npm run docker:prod:up   # Start all services in production mode
 ```
+
+## 🚀 CI/CD Pipeline
+
+Project menggunakan GitHub Actions untuk automated testing dan deployment.
+
+### Workflows:
+
+1. **CI/CD Pipeline** - Main deployment workflow
+   - Code quality checks (Prettier, TypeScript)
+   - Build verification
+   - Automated deployment ke production (EC2)
+   - Deployment notifications
+
+2. **Pull Request Checks** - Automated PR validation
+   - PR title validation (semantic versioning)
+   - Code quality checks
+   - Build verification
+   - Security audit
+   - Auto-comment results di PR
+
+3. **Staging Deploy** - Development branch deployment
+   - Build untuk staging environment
+   - Optional deploy ke staging server
+
+4. **Database Check** - Schema validation
+   - Prisma schema validation
+   - Migration testing dengan PostgreSQL
+   - Auto-comment migration info
+
+5. **Dependency Check** - Weekly maintenance
+   - Check outdated packages
+   - Security vulnerability scan
+   - Auto-create GitHub issues
+
+### Required GitHub Secrets:
+
+```
+EC2_HOST           # Production server IP/hostname
+EC2_USER           # SSH username
+EC2_SSH_KEY        # Private SSH key
+```
+
+### Branching Strategy:
+
+```
+main (production) → Auto-deploy ke EC2
+├── develop (staging) → Auto-build staging
+    ├── feature/* → Create PR to develop
+    ├── fix/* → Create PR to develop
+    └── chore/* → Create PR to develop
+```
+
+Untuk dokumentasi lengkap CI/CD, lihat [docs/cicd-guide.md](./docs/cicd-guide.md)
 
 ## 🐳 Docker Commands
 
@@ -415,8 +512,11 @@ To view the complete schema: `prisma/schema.prisma`
 - `GET /api/applications/:id` - Get application details
 - `POST /api/applications` - Create application
 - `PUT /api/applications/:id` - Update application
-- `DELETE /api/applications/:id` - Delete application
+- `DELETE /api/applications/:id` - Soft-delete application
 - `POST /api/applications/extract-url` - Extract job details from URL (AI)
+- `GET /api/applications/deleted/list` - List deleted applications
+- `POST /api/applications/:id/restore` - Restore deleted application
+- `DELETE /api/applications/:id/permanent` - Permanently delete application
 
 ### Companies
 
@@ -424,7 +524,10 @@ To view the complete schema: `prisma/schema.prisma`
 - `GET /api/companies/:id` - Get company details
 - `POST /api/companies` - Create company
 - `PUT /api/companies/:id` - Update company
-- `DELETE /api/companies/:id` - Delete company
+- `DELETE /api/companies/:id` - Soft-delete company
+- `GET /api/companies/deleted/list` - List deleted companies
+- `POST /api/companies/:id/restore` - Restore deleted company
+- `DELETE /api/companies/:id/permanent` - Permanently delete company
 
 ### Dashboard
 
@@ -436,7 +539,10 @@ To view the complete schema: `prisma/schema.prisma`
 - `GET /api/reminders/:id` - Get reminder details
 - `POST /api/reminders` - Create reminder
 - `PUT /api/reminders/:id` - Update reminder
-- `DELETE /api/reminders/:id` - Delete reminder
+- `DELETE /api/reminders/:id` - Soft-delete reminder
+- `GET /api/reminders/deleted/list` - List deleted reminders
+- `POST /api/reminders/:id/restore` - Restore deleted reminder
+- `DELETE /api/reminders/:id/permanent` - Permanently delete reminder
 
 ### Users
 
@@ -449,6 +555,12 @@ To view the complete schema: `prisma/schema.prisma`
 
 - `GET /api/users` - List all users
 - `DELETE /api/users/:id` - Soft delete user
+
+### Users Recycle Bin (Admin Only)
+
+- `GET /api/users/deleted/list` - List deleted users
+- `POST /api/users/:id/restore` - Restore deleted user
+- `DELETE /api/users/:id/permanent` - Permanently delete user
 
 For detailed API documentation, visit http://localhost:3000/api-docs
 
@@ -547,8 +659,9 @@ curl http://localhost:3000/api/dashboard/stats \
 
 For more troubleshooting, see [docs/development-setup.md](./docs/development-setup.md)
 
-## 📝 Additional Documentation
+## 📝 Documentation
 
+<<<<<<< HEAD
 ### Setup & Development
 
 - [docs/development-setup.md](./docs/development-setup.md) - Complete development setup guide
@@ -572,6 +685,12 @@ For more troubleshooting, see [docs/development-setup.md](./docs/development-set
 - [docs/api-contract.md](./docs/api-contract.md) - API contract specifications
 - [docs/setup-custom-domain-email.md](./docs/setup-custom-domain-email.md) - Custom domain email options
 - [docs/quick-custom-domain-setup.md](./docs/quick-custom-domain-setup.md) - Quick domain setup
+=======
+- **[docs/api-contract.md](./docs/api-contract.md)** - 📘 Complete API documentation (44 endpoints)
+- **[docs/final-summary.md](./docs/final-summary.md)** - Project overview and summary
+- **[docs/scripts-reference.md](./docs/scripts-reference.md)** - 📜 NPM scripts documentation
+- **[docs/cicd-guide.md](./docs/cicd-guide.md)** - 🚀 CI/CD workflows documentation
+>>>>>>> ee10cb0ede7f12049247c40213c7fb6903524b13
 
 ## 🤝 Contributing
 
@@ -587,7 +706,7 @@ This project is licensed under the ISC License.
 
 ## 👥 Authors
 
-- Your Name - Initial work
+- Irfan Muria
 
 ## 🙏 Acknowledgments
 

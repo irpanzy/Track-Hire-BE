@@ -472,10 +472,27 @@ export const resetPassword = async (
       return;
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: result.userId },
+    });
+
+    if (!user) {
+      res.status(400).json({ message: "Invalid or expired reset token" });
+      return;
+    }
+
+    if (!user.password) {
+      res.status(400).json({
+        message:
+          "Password reset is not available for accounts registered via Google. Please sign in with Google.",
+      });
+      return;
+    }
+
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
     await prisma.user.update({
-      where: { id: result.userId },
+      where: { id: user.id },
       data: { password: hashedPassword },
     });
 
