@@ -30,77 +30,77 @@ Authorization: Bearer {accessToken}
 
 ### **Authentication (9 endpoints)**
 
-| #   | Method | Endpoint                    | Auth   | Description               |
-| --- | ------ | --------------------------- | ------ | ------------------------- |
-| 1   | POST   | `/api/auth/register`        | None   | Register new user         |
-| 2   | POST   | `/api/auth/verify-email`    | None   | Verify email address      |
-| 3   | POST   | `/api/auth/login`           | None   | Login with email/password |
-| 4   | POST   | `/api/auth/google`          | None   | Login with Google OAuth   |
-| 5   | POST   | `/api/auth/forgot-password` | None   | Request password reset    |
-| 6   | POST   | `/api/auth/reset-password`  | None   | Reset password            |
-| 7   | POST   | `/api/auth/refresh`         | Cookie | Refresh access token      |
-| 8   | POST   | `/api/auth/logout`          | None   | Logout user               |
-| 9   | GET    | `/api/auth/me`              | JWT    | Get current user profile  |
+| #   | Method | Endpoint                                          | Auth   | Description               |
+| --- | ------ | ------------------------------------------------- | ------ | ------------------------- |
+| 1   | POST   | [`/api/auth/register`](#1-register-user)          | None   | Register new user         |
+| 2   | POST   | [`/api/auth/verify-email`](#2-verify-email)       | None   | Verify email address      |
+| 3   | POST   | [`/api/auth/login`](#3-login)                     | None   | Login with email/password |
+| 4   | POST   | [`/api/auth/google`](#4-google-oauth-login)       | None   | Login with Google OAuth   |
+| 5   | POST   | [`/api/auth/forgot-password`](#5-forgot-password) | None   | Request password reset    |
+| 6   | POST   | [`/api/auth/reset-password`](#6-reset-password)   | None   | Reset password            |
+| 7   | POST   | [`/api/auth/refresh`](#7-refresh-access-token)    | Cookie | Refresh access token      |
+| 8   | POST   | [`/api/auth/logout`](#8-logout)                   | None   | Logout user               |
+| 9   | GET    | [`/api/auth/me`](#9-get-current-user)             | JWT    | Get current user profile  |
 
 ### **User Management (9 endpoints)**
 
-| #   | Method | Endpoint                   | Auth  | Description             |
-| --- | ------ | -------------------------- | ----- | ----------------------- |
-| 10  | GET    | `/api/users`               | Admin | List all users          |
-| 11  | GET    | `/api/users/:id`           | JWT   | Get user by ID          |
-| 12  | PUT    | `/api/users/:id`           | JWT   | Update user profile     |
-| 13  | PUT    | `/api/users/:id/avatar`    | JWT   | Upload avatar           |
-| 14  | DELETE | `/api/users/:id/avatar`    | JWT   | Delete avatar           |
-| 15  | DELETE | `/api/users/:id`           | Admin | Soft-delete user        |
-| 16  | GET    | `/api/users/deleted/list`  | Admin | List deleted users      |
-| 17  | POST   | `/api/users/:id/restore`   | Admin | Restore deleted user    |
-| 18  | DELETE | `/api/users/:id/permanent` | Admin | Permanently delete user |
+| #   | Method | Endpoint                                                             | Auth  | Description             |
+| --- | ------ | -------------------------------------------------------------------- | ----- | ----------------------- |
+| 10  | GET    | [`/api/users`](#10-list-all-users-admin-only)                        | Admin | List all users          |
+| 11  | GET    | [`/api/users/:id`](#11-get-user-by-id)                               | JWT   | Get user by ID          |
+| 12  | PUT    | [`/api/users/:id`](#12-update-user-profile)                          | JWT   | Update user profile     |
+| 13  | PUT    | [`/api/users/:id/avatar`](#13-upload-avatar)                         | JWT   | Upload avatar           |
+| 14  | DELETE | [`/api/users/:id/avatar`](#14-delete-avatar)                         | JWT   | Delete avatar           |
+| 15  | DELETE | [`/api/users/:id`](#15-soft-delete-user-admin-only)                  | Admin | Soft-delete user        |
+| 16  | GET    | [`/api/users/deleted/list`](#16-list-deleted-users-admin-only)       | Admin | List deleted users      |
+| 17  | POST   | [`/api/users/:id/restore`](#17-restore-deleted-user-admin-only)      | Admin | Restore deleted user    |
+| 18  | DELETE | [`/api/users/:id/permanent`](#18-permanently-delete-user-admin-only) | Admin | Permanently delete user |
 
 ### **Application Management (9 endpoints)**
 
-| #   | Method | Endpoint                          | Auth | Description                    |
-| --- | ------ | --------------------------------- | ---- | ------------------------------ |
-| 19  | POST   | `/api/applications`               | JWT  | Create application             |
-| 20  | POST   | `/api/applications/extract-url`   | JWT  | AI extract from URL            |
-| 21  | GET    | `/api/applications`               | JWT  | List applications              |
-| 22  | GET    | `/api/applications/:id`           | JWT  | Get application by ID          |
-| 23  | PUT    | `/api/applications/:id`           | JWT  | Update application             |
-| 24  | DELETE | `/api/applications/:id`           | JWT  | Soft-delete application        |
-| 25  | GET    | `/api/applications/deleted/list`  | JWT  | List deleted applications      |
-| 26  | POST   | `/api/applications/:id/restore`   | JWT  | Restore deleted application    |
-| 27  | DELETE | `/api/applications/:id/permanent` | JWT  | Permanently delete application |
+| #   | Method | Endpoint                                                                | Auth | Description                    |
+| --- | ------ | ----------------------------------------------------------------------- | ---- | ------------------------------ |
+| 19  | POST   | [`/api/applications`](#19-create-application)                           | JWT  | Create application             |
+| 20  | POST   | [`/api/applications/extract-url`](#20-ai-extract-job-details-from-url)  | JWT  | AI extract from URL            |
+| 21  | GET    | [`/api/applications`](#21-list-applications)                            | JWT  | List applications              |
+| 22  | GET    | [`/api/applications/:id`](#22-get-application-by-id)                    | JWT  | Get application by ID          |
+| 23  | PUT    | [`/api/applications/:id`](#23-update-application)                       | JWT  | Update application             |
+| 24  | DELETE | [`/api/applications/:id`](#24-soft-delete-application)                  | JWT  | Soft-delete application        |
+| 25  | GET    | [`/api/applications/deleted/list`](#25-list-deleted-applications)       | JWT  | List deleted applications      |
+| 26  | POST   | [`/api/applications/:id/restore`](#26-restore-application)              | JWT  | Restore deleted application    |
+| 27  | DELETE | [`/api/applications/:id/permanent`](#27-permanently-delete-application) | JWT  | Permanently delete application |
 
 ### **Company Management (8 endpoints)**
 
-| #   | Method | Endpoint                       | Auth | Description                |
-| --- | ------ | ------------------------------ | ---- | -------------------------- |
-| 28  | POST   | `/api/companies`               | JWT  | Create company             |
-| 29  | GET    | `/api/companies`               | JWT  | List companies             |
-| 30  | GET    | `/api/companies/:id`           | JWT  | Get company by ID          |
-| 31  | PUT    | `/api/companies/:id`           | JWT  | Update company             |
-| 32  | DELETE | `/api/companies/:id`           | JWT  | Soft-delete company        |
-| 33  | GET    | `/api/companies/deleted/list`  | JWT  | List deleted companies     |
-| 34  | POST   | `/api/companies/:id/restore`   | JWT  | Restore deleted company    |
-| 35  | DELETE | `/api/companies/:id/permanent` | JWT  | Permanently delete company |
+| #   | Method | Endpoint                                                         | Auth | Description                |
+| --- | ------ | ---------------------------------------------------------------- | ---- | -------------------------- |
+| 28  | POST   | [`/api/companies`](#28-create-company)                           | JWT  | Create company             |
+| 29  | GET    | [`/api/companies`](#29-list-companies)                           | JWT  | List companies             |
+| 30  | GET    | [`/api/companies/:id`](#30-get-company-by-id)                    | JWT  | Get company by ID          |
+| 31  | PUT    | [`/api/companies/:id`](#31-update-company)                       | JWT  | Update company             |
+| 32  | DELETE | [`/api/companies/:id`](#32-soft-delete-company)                  | JWT  | Soft-delete company        |
+| 33  | GET    | [`/api/companies/deleted/list`](#33-list-deleted-companies)      | JWT  | List deleted companies     |
+| 34  | POST   | [`/api/companies/:id/restore`](#34-restore-company)              | JWT  | Restore deleted company    |
+| 35  | DELETE | [`/api/companies/:id/permanent`](#35-permanently-delete-company) | JWT  | Permanently delete company |
 
 ### **Reminder Management (8 endpoints)**
 
-| #   | Method | Endpoint                       | Auth | Description                 |
-| --- | ------ | ------------------------------ | ---- | --------------------------- |
-| 36  | POST   | `/api/reminders`               | JWT  | Create reminder             |
-| 37  | GET    | `/api/reminders`               | JWT  | List reminders              |
-| 38  | GET    | `/api/reminders/:id`           | JWT  | Get reminder by ID          |
-| 39  | PUT    | `/api/reminders/:id`           | JWT  | Update reminder             |
-| 40  | DELETE | `/api/reminders/:id`           | JWT  | Soft-delete reminder        |
-| 41  | GET    | `/api/reminders/deleted/list`  | JWT  | List deleted reminders      |
-| 42  | POST   | `/api/reminders/:id/restore`   | JWT  | Restore deleted reminder    |
-| 43  | DELETE | `/api/reminders/:id/permanent` | JWT  | Permanently delete reminder |
+| #   | Method | Endpoint                                                             | Auth | Description                 |
+| --- | ------ | -------------------------------------------------------------------- | ---- | --------------------------- |
+| 36  | POST   | [`/api/reminders`](#36-create-reminder)                              | JWT  | Create reminder             |
+| 37  | GET    | [`/api/reminders`](#37-list-reminders)                               | JWT  | List reminders              |
+| 38  | GET    | [`/api/reminders/:id`](#38-get-reminder-by-id)                       | JWT  | Get reminder by ID          |
+| 39  | PUT    | [`/api/reminders/:id`](#39-update-reminder)                          | JWT  | Update reminder             |
+| 40  | DELETE | [`/api/reminders/:id`](#40-soft-delete-reminder)                     | JWT  | Soft-delete reminder        |
+| 41  | GET    | [`/api/reminders/deleted/list`](#41-list-deleted-reminders)          | JWT  | List deleted reminders      |
+| 42  | POST   | [`/api/reminders/:id/restore`](#42-restore-reminder)                 | JWT  | Restore deleted reminder    |
+| 43  | DELETE | [`/api/reminders/:id/permanent`](#43-permanently-delete-reminder)    | JWT  | Permanently delete reminder |
 
 ### **Dashboard (1 endpoint)**
 
-| #   | Method | Endpoint               | Auth | Description              |
-| --- | ------ | ---------------------- | ---- | ------------------------ |
-| 44  | GET    | `/api/dashboard/stats` | JWT  | Get dashboard statistics |
+| #   | Method | Endpoint                                             | Auth | Description              |
+| --- | ------ | ---------------------------------------------------- | ---- | ------------------------ |
+| 44  | GET    | [`/api/dashboard/stats`](#44-get-dashboard-statistics) | JWT  | Get dashboard statistics |
 
 **Total: 44 endpoints**
 
