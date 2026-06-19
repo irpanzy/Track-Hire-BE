@@ -929,7 +929,7 @@ const swaggerDefinition = {
         tags: ["Users"],
         summary: "Upload or update avatar",
         description:
-          "Upload a new avatar image. The image is resized to 200x200px WebP format and stored on ImageKit. Maximum file size: 2MB. Accepted formats: JPEG, PNG, WebP, GIF.",
+          "Upload a new avatar image. The image is resized to 1024x1024px WebP format and stored on ImageKit. Maximum file size: 2MB. Accepted formats: JPEG, PNG, WebP, GIF.",
         security: [{ cookieAccessToken: [] }],
         parameters: [
           {

@@ -1,5 +1,9 @@
 # Track Hire Backend
 
+[![CI/CD Pipeline](https://github.com/USERNAME/track-hire-be/actions/workflows/deploy.yml/badge.svg)](https://github.com/USERNAME/track-hire-be/actions/workflows/deploy.yml)
+[![PR Checks](https://github.com/USERNAME/track-hire-be/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/USERNAME/track-hire-be/actions/workflows/pr-checks.yml)
+[![Staging Deploy](https://github.com/USERNAME/track-hire-be/actions/workflows/staging-deploy.yml/badge.svg)](https://github.com/USERNAME/track-hire-be/actions/workflows/staging-deploy.yml)
+
 RESTful API backend for Track Hire - a job application tracking system built with Node.js, Express, TypeScript, Prisma, Redis, and RabbitMQ.
 
 ## 🌐 Live Deployment
@@ -176,6 +180,8 @@ Once the server is running, access the interactive API documentation at:
 
 ## 🔧 Available Scripts
 
+For complete script documentation, see [docs/scripts-reference.md](./docs/scripts-reference.md)
+
 ```bash
 # Development
 npm run dev              # Start development server with hot-reload
@@ -186,13 +192,72 @@ npm start                # Start production server (requires build)
 
 # Code Quality
 npm run format           # Format code with Prettier
-npm run noemit           # Type-check without emitting files
+npm run format:check     # Check code formatting
+npm run type-check       # Type-check without emitting files
 
 # Database
 npm run prisma:migrate   # Run database migrations
 npm run prisma:generate  # Generate Prisma Client
 npm run prisma:seed      # Seed database with initial data
+npm run prisma:studio    # Open Prisma Studio GUI
+
+# Docker
+npm run docker:dev:up    # Start dev services (Redis, RabbitMQ)
+npm run docker:prod:up   # Start all services in production mode
 ```
+
+## 🚀 CI/CD Pipeline
+
+Project menggunakan GitHub Actions untuk automated testing dan deployment.
+
+### Workflows:
+
+1. **CI/CD Pipeline** - Main deployment workflow
+   - Code quality checks (Prettier, TypeScript)
+   - Build verification
+   - Automated deployment ke production (EC2)
+   - Deployment notifications
+
+2. **Pull Request Checks** - Automated PR validation
+   - PR title validation (semantic versioning)
+   - Code quality checks
+   - Build verification
+   - Security audit
+   - Auto-comment results di PR
+
+3. **Staging Deploy** - Development branch deployment
+   - Build untuk staging environment
+   - Optional deploy ke staging server
+
+4. **Database Check** - Schema validation
+   - Prisma schema validation
+   - Migration testing dengan PostgreSQL
+   - Auto-comment migration info
+
+5. **Dependency Check** - Weekly maintenance
+   - Check outdated packages
+   - Security vulnerability scan
+   - Auto-create GitHub issues
+
+### Required GitHub Secrets:
+
+```
+EC2_HOST           # Production server IP/hostname
+EC2_USER           # SSH username
+EC2_SSH_KEY        # Private SSH key
+```
+
+### Branching Strategy:
+
+```
+main (production) → Auto-deploy ke EC2
+├── develop (staging) → Auto-build staging
+    ├── feature/* → Create PR to develop
+    ├── fix/* → Create PR to develop
+    └── chore/* → Create PR to develop
+```
+
+Untuk dokumentasi lengkap CI/CD, lihat [docs/cicd-guide.md](./docs/cicd-guide.md)
 
 ## 🐳 Docker Commands
 
@@ -549,6 +614,8 @@ For more troubleshooting, see [docker-setup.md](./docs/docker-setup.md)
 
 - **[docs/api-contract.md](./docs/api-contract.md)** - 📘 Complete API documentation (44 endpoints)
 - **[docs/final-summary.md](./docs/final-summary.md)** - Project overview and summary
+- **[docs/scripts-reference.md](./docs/scripts-reference.md)** - 📜 NPM scripts documentation
+- **[docs/cicd-guide.md](./docs/cicd-guide.md)** - 🚀 CI/CD workflows documentation
 
 ## 🤝 Contributing
 
